@@ -42,7 +42,8 @@ See the guides in `docs/`:
 - **Today's progress ring** — shows how many of today's habits are done.
 - **Week / Month / Stats views** — toggle between a weekly grid, a month heatmap (calendar-style dots, one per day, with an overall month %), and a **Stats dashboard**.
 - **Stats dashboard** — total check-ins, active habits, longest streak, 30-day average, a 30-day completion chart, and a per-habit table (total / current streak / record / 30-day rate).
-- **Daily reminder** — 🔔 button sets a daily browser notification reminding you of unfinished habits (works while the tab is open).
+- **Daily reminder** — 🔔 button sets a daily browser notification reminding you of unfinished habits. Uses the Notification Triggers API (fires even with the tab closed on Chrome/Edge) and falls back to an in-tab timer elsewhere.
+- **Installable PWA** — `manifest.webmanifest` + `sw.js` make the app installable and offline-capable. See `docs/05-PWA-PRZYPOMNIENIA.md`.
 - **Period navigation** — use ‹ › to look back at previous weeks or months (you can't mark future days).
 - **Week chart** — bars show your completion percentage for each day of the visible week.
 - **Drag to reorder** — grab the ⠿ handle and drag a habit up or down (week view).

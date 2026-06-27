@@ -4,6 +4,9 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Habit Tracker</title>
+<link rel="manifest" href="./manifest.webmanifest" />
+<meta name="theme-color" content="#0f1220" />
+<link rel="apple-touch-icon" href="./assets/icon-192.png" />
 <style>
   :root {
     --bg: #0f1220;
@@ -759,7 +762,7 @@
   // ---- daily reminder (browser notifications) ----
   const REMIND_KEY = "habitTracker.reminder";
   const remindBtn = document.getElementById("remindBtn");
-  let reminderTimer = null;
+  let reminderTimer = null, swReg = null;
 
   function loadReminder() { try { return JSON.parse(localStorage.getItem(REMIND_KEY)) || {}; } catch (e) { return {}; } }
   function saveReminder(r) { localStorage.setItem(REMIND_KEY, JSON.stringify(r)); }
@@ -771,9 +774,38 @@
     remindBtn.title = r.enabled ? `Przypomnienie o ${r.time || "20:00"} — kliknij, by zmienić` : "Codzienne przypomnienie (wyłączone)";
   }
 
-  function scheduleReminder() {
+  // Notification Triggers API — fires even when the tab/browser is closed (Chrome/Edge).
+  // We pre-schedule the next 14 days; reopening the app keeps the queue topped up.
+  async function scheduleTriggers(reg, r) {
+    try {
+      const pending = await reg.getNotifications({ includeTriggered: false });
+      pending.filter(n => n.tag && n.tag.indexOf("ht-daily-") === 0).forEach(n => n.close());
+    } catch (e) {}
+    if (!r.enabled || !r.time) return; // disabled → just cancel pending
+    const [hh, mm] = r.time.split(":").map(Number);
+    const now = Date.now();
+    for (let i = 0; i < 14; i++) {
+      const when = new Date(); when.setHours(hh, mm, 0, 0); when.setDate(when.getDate() + i);
+      if (when.getTime() <= now) continue;
+      reg.showNotification("🎯 Habit Tracker", {
+        tag: "ht-daily-" + iso(when),
+        body: "Czas odhaczyć dzisiejsze nawyki — nie przerywaj serii! 🔥",
+        icon: "./assets/icon-192.png",
+        badge: "./assets/icon-192.png",
+        showTrigger: new TimestampTrigger(when.getTime()),
+      });
+    }
+  }
+
+  async function scheduleReminder() {
     clearTimeout(reminderTimer);
     const r = loadReminder();
+    const canTrigger = swReg && ("showTrigger" in Notification.prototype) && ("TimestampTrigger" in window);
+    if (canTrigger && Notification.permission === "granted") {
+      scheduleTriggers(swReg, r);   // works with the tab closed
+      return;
+    }
+    // Fallback: in-tab timer (fires only while this tab stays open)
     if (!r.enabled || !r.time) return;
     const [hh, mm] = r.time.split(":").map(Number);
     const now = new Date();
@@ -827,8 +859,17 @@
   document.addEventListener("click", (e) => {
     if (!e.target.closest(".popover") && !e.target.closest("#remindBtn")) closePopover();
   });
-  updateRemindBtn();
-  scheduleReminder();
+  async function setupReminders() {
+    updateRemindBtn();
+    if ("serviceWorker" in navigator) {
+      try {
+        await navigator.serviceWorker.register("./sw.js");
+        swReg = await navigator.serviceWorker.ready;
+      } catch (e) { /* file:// or unsupported → fall back to in-tab timer */ }
+    }
+    scheduleReminder();
+  }
+  setupReminders();
 
   render();
   initCloud();
