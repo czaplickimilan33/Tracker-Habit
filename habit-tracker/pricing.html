@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Cennik — Habit Tracker</title>
+<meta name="description" content="Habit Tracker — plan darmowy i Premium. Synchronizacja w chmurze, nielimitowane nawyki, statystyki." />
+<style>
+  :root {
+    --bg:#0f1220; --panel:#181c2e; --panel-2:#1f2440; --line:#2a3052;
+    --text:#e8ebff; --muted:#9aa3c7; --accent:#6c8cff; --accent-2:#57e0b0;
+    --shadow:0 18px 50px rgba(0,0,0,.45);
+  }
+  * { box-sizing:border-box; }
+  html,body { margin:0; }
+  body {
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:radial-gradient(1200px 700px at 50% -10%, #1b2140 0%, var(--bg) 55%);
+    color:var(--text); min-height:100vh; line-height:1.55;
+  }
+  a { color:inherit; }
+  .wrap { max-width:980px; margin:0 auto; padding:0 20px; }
+  nav { display:flex; align-items:center; justify-content:space-between; padding:22px 0; }
+  .brand { display:flex; align-items:center; gap:12px; font-weight:700; font-size:18px; text-decoration:none; }
+  .logo { width:40px; height:40px; border-radius:11px; background:linear-gradient(135deg,var(--accent),var(--accent-2)); display:grid; place-items:center; font-size:20px; box-shadow:var(--shadow); }
+  .btn { display:inline-block; border:1px solid var(--line); background:var(--panel-2); color:var(--text); padding:11px 20px; border-radius:11px; text-decoration:none; font-weight:600; cursor:pointer; transition:.15s; }
+  .btn:hover { border-color:var(--accent); transform:translateY(-1px); }
+  .btn.primary { background:linear-gradient(135deg,var(--accent),#8aa0ff); border:none; color:#fff; }
+  .btn.block { display:block; text-align:center; width:100%; }
+
+  header.head { text-align:center; padding:34px 0 10px; }
+  header.head h1 { font-size:38px; margin:0 0 10px; letter-spacing:-.5px; }
+  header.head p { color:var(--muted); margin:0; }
+
+  .toggle { display:flex; justify-content:center; gap:8px; margin:24px 0 36px; }
+  .toggle button { border:1px solid var(--line); background:var(--panel-2); color:var(--muted); padding:8px 18px; border-radius:999px; cursor:pointer; font:inherit; }
+  .toggle button.active { background:var(--accent); color:#fff; border-color:transparent; font-weight:600; }
+  .save-tag { font-size:12px; color:var(--accent-2); align-self:center; }
+
+  .plans { display:grid; grid-template-columns:1fr 1fr; gap:22px; padding-bottom:30px; align-items:start; }
+  .plan { background:var(--panel); border:1px solid var(--line); border-radius:18px; padding:28px; box-shadow:var(--shadow); }
+  .plan.pro { border-color:color-mix(in srgb,var(--accent) 55%,transparent); position:relative; }
+  .badge { position:absolute; top:-12px; right:24px; background:linear-gradient(135deg,var(--accent),var(--accent-2)); color:#06231b; font-size:12px; font-weight:700; padding:5px 12px; border-radius:999px; }
+  .plan h2 { margin:0 0 4px; font-size:20px; }
+  .plan .desc { color:var(--muted); font-size:14px; margin:0 0 18px; min-height:40px; }
+  .price { font-size:40px; font-weight:800; letter-spacing:-1px; }
+  .price small { font-size:15px; color:var(--muted); font-weight:500; }
+  ul.feat { list-style:none; padding:0; margin:22px 0; }
+  ul.feat li { padding:8px 0 8px 28px; position:relative; color:var(--text); font-size:15px; border-top:1px solid var(--line); }
+  ul.feat li:first-child { border-top:none; }
+  ul.feat li::before { content:"✓"; position:absolute; left:0; color:var(--accent-2); font-weight:800; }
+  ul.feat li.off { color:var(--muted); }
+  ul.feat li.off::before { content:"–"; color:var(--muted); }
+
+  .faq { padding:20px 0 70px; max-width:760px; margin:0 auto; }
+  .faq h3 { text-align:center; font-size:24px; margin-bottom:24px; }
+  details { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:14px 18px; margin-bottom:12px; }
+  details summary { cursor:pointer; font-weight:600; }
+  details p { color:var(--muted); margin:10px 0 0; }
+
+  footer { border-top:1px solid var(--line); padding:26px 0; color:var(--muted); font-size:13px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; }
+  footer a { color:var(--muted); text-decoration:none; }
+  footer a:hover { color:var(--text); }
+  .note { text-align:center; color:var(--muted); font-size:13px; margin-top:-10px; padding-bottom:20px; }
+
+  @media (max-width:760px) { .plans { grid-template-columns:1fr; } header.head h1 { font-size:30px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav>
+    <a class="brand" href="./index.html"><span class="logo">🎯</span> Habit Tracker</a>
+    <div><a class="btn primary" href="./app.html">Otwórz aplikację →</a></div>
+  </nav>
+
+  <header class="head">
+    <h1>Prosty cennik</h1>
+    <p>Zacznij za darmo. Przejdź na Premium, gdy zechcesz synchronizacji i więcej nawyków.</p>
+  </header>
+
+  <div class="toggle">
+    <button id="mo" class="active">Miesięcznie</button>
+    <button id="yr">Rocznie</button>
+    <span class="save-tag">– 2 miesiące gratis</span>
+  </div>
+
+  <section class="plans">
+    <div class="plan">
+      <h2>Darmowy</h2>
+      <p class="desc">Wszystko, czego potrzeba, by zacząć budować nawyki.</p>
+      <div class="price">0 zł</div>
+      <ul class="feat">
+        <li>Do 5 nawyków</li>
+        <li>Widok tygodnia i miesiąca</li>
+        <li>Serie 🔥 i rekordy</li>
+        <li>Motyw jasny / ciemny</li>
+        <li>Eksport i import danych</li>
+        <li class="off">Synchronizacja w chmurze</li>
+        <li class="off">Nielimitowane nawyki</li>
+      </ul>
+      <a class="btn block" href="./app.html">Zacznij za darmo</a>
+    </div>
+
+    <div class="plan pro">
+      <span class="badge">POLECANY</span>
+      <h2>Premium</h2>
+      <p class="desc">Dla tych, którzy myślą poważnie o swoich nawykach.</p>
+      <div class="price"><span id="price">19</span> zł <small id="per">/ miesiąc</small></div>
+      <ul class="feat">
+        <li>Wszystko z planu darmowego</li>
+        <li><b>Nielimitowane</b> nawyki</li>
+        <li><b>Synchronizacja</b> między urządzeniami</li>
+        <li>Konto i logowanie e-mailem</li>
+        <li>Statystyki i podsumowania</li>
+        <li>Priorytetowe wsparcie</li>
+      </ul>
+      <!-- Podmień href na link checkout z operatora płatności (patrz docs/03-PLATNOSCI.md) -->
+      <a class="btn primary block" id="buyBtn" href="#" data-checkout="">Wybierz Premium</a>
+    </div>
+  </section>
+  <p class="note">Ceny przykładowe — ustaw własne w panelu operatora płatności i podmień link „Wybierz Premium".</p>
+
+  <section class="faq">
+    <h3>Najczęstsze pytania</h3>
+    <details><summary>Czy muszę zakładać konto, żeby korzystać?</summary><p>Nie. Plan darmowy działa od razu w przeglądarce, bez rejestracji. Konto przydaje się dopiero do synchronizacji między urządzeniami (Premium).</p></details>
+    <details><summary>Gdzie trzymane są moje dane?</summary><p>W planie darmowym — wyłącznie lokalnie w Twojej przeglądarce. W Premium dodatkowo w chmurze, żeby synchronizować urządzenia. Szczegóły w <a href="./privacy.html">polityce prywatności</a>.</p></details>
+    <details><summary>Czy mogę zrezygnować?</summary><p>Tak, w każdej chwili. Po rezygnacji zachowujesz dostęp do końca opłaconego okresu, a Twoje dane możesz wyeksportować do pliku.</p></details>
+    <details><summary>Czy dostanę fakturę?</summary><p>Tak. Sposób wystawiania faktur zależy od operatora płatności (np. Lemon Squeezy / Paddle wystawiają je automatycznie).</p></details>
+  </section>
+
+  <footer>
+    <div>© <span id="y"></span> Habit Tracker</div>
+    <div>
+      <a href="./app.html">Aplikacja</a> ·
+      <a href="./index.html">Strona główna</a> ·
+      <a href="./privacy.html">Prywatność</a> ·
+      <a href="./terms.html">Regulamin</a>
+    </div>
+  </footer>
+</div>
+<script>
+  document.getElementById("y").textContent = new Date().getFullYear();
+  const PRICES = { mo: { price: 19, per: "/ miesiąc" }, yr: { price: 190, per: "/ rok" } };
+  const moBtn = document.getElementById("mo"), yrBtn = document.getElementById("yr");
+  function setPlan(k) {
+    document.getElementById("price").textContent = PRICES[k].price;
+    document.getElementById("per").textContent = PRICES[k].per;
+    moBtn.classList.toggle("active", k === "mo");
+    yrBtn.classList.toggle("active", k === "yr");
+  }
+  moBtn.onclick = () => setPlan("mo");
+  yrBtn.onclick = () => setPlan("yr");
+  // Bezpieczeństwo: kup tylko jeśli skonfigurowano link checkout
+  document.getElementById("buyBtn").addEventListener("click", (e) => {
+    const url = e.currentTarget.dataset.checkout;
+    if (!url) { e.preventDefault(); alert("Płatności nie są jeszcze skonfigurowane. Ustaw link checkout — patrz docs/03-PLATNOSCI.md."); }
+  });
+</script>
+</body>
+</html>
