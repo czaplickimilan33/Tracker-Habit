@@ -5,11 +5,19 @@ A small, self-contained habit tracker. No build step, no dependencies — just o
 ## Files
 
 - `index.html` — marketing landing page (the product site).
+- `pricing.html` — Free vs Premium pricing page (monthly/yearly toggle).
 - `app.html` — the habit tracker app itself.
+- `config.js` — optional Supabase keys + free-plan limit. Empty = 100% local mode.
 - `assets/screenshot.png` — auto-generated app screenshot used on the landing page.
 - `vercel.json` — static-hosting config (clean URLs) for Vercel.
 - `privacy.html`, `terms.html` — Polish legal-page templates (fill in the `[ ]` fields).
 - `docs/` — step-by-step guides (PL): deploy on Vercel, backend, payments, legal requirements.
+
+## Cloud sync (optional)
+
+The app works fully offline by default. To enable accounts + sync across devices,
+fill in `config.js` with your Supabase URL and anon key (see `docs/02-BACKEND.md`).
+Until then the "Zaloguj" button stays hidden and everything stays in `localStorage`.
 
 ## Run it
 

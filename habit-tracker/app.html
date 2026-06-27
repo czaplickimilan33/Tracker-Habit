@@ -179,6 +179,7 @@
       </div>
     </div>
     <div class="right">
+      <button class="btn" id="accountBtn" title="Zaloguj / synchronizuj" style="display:none">Zaloguj</button>
       <button class="btn icon" id="themeBtn" title="Toggle theme">🌙</button>
       <div class="summary">
         <div class="ring" id="ring">
@@ -228,6 +229,7 @@
   </footer>
 </div>
 
+<script src="./config.js"></script>
 <script>
 (function () {
   "use strict";
@@ -269,12 +271,17 @@
     s.habits = s.habits.map(h => ({ id: h.id || id(), name: String(h.name || "Untitled"), color: h.color || COLORS[0], log: h.log && typeof h.log === "object" ? h.log : {} }));
     return s;
   }
-  function save() { localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
+  function save() { localStorage.setItem(STORE_KEY, JSON.stringify(state)); pushCloud(); }
   function id() { return Math.random().toString(36).slice(2, 9); }
 
   // ---- actions ----
   function addHabit(name) {
     name = name.trim(); if (!name) return;
+    // limit darmowego planu — działa tylko gdy chmura włączona i brak premium
+    if (CFG.supabaseUrl && !isPremium && CFG.freeHabitLimit && state.habits.length >= CFG.freeHabitLimit) {
+      alert(`Plan darmowy pozwala na ${CFG.freeHabitLimit} nawyków. Przejdź na Premium, aby dodać więcej.`);
+      return;
+    }
     state.habits.push({ id: id(), name, color: COLORS[state.habits.length % COLORS.length], log: {} });
     save(); render();
   }
@@ -576,7 +583,71 @@
     reader.readAsText(file); e.target.value = "";
   });
 
+  // ---- optional cloud sync (Supabase) ----
+  // Inert until config.js has supabaseUrl + supabaseAnonKey. Until then the app
+  // is 100% local (localStorage) and the account button stays hidden.
+  const CFG = window.HABIT_CONFIG || {};
+  let supa = null, user = null, isPremium = false, pushTimer = null;
+  const accountBtn = document.getElementById("accountBtn");
+
+  function updateAccountUI() {
+    accountBtn.textContent = user ? "⏏ " + (user.email || "Wyloguj") : "Zaloguj";
+    accountBtn.title = user ? "Kliknij, aby się wylogować" : "Zaloguj się i synchronizuj między urządzeniami";
+  }
+
+  function pushCloud() {
+    if (!supa || !user) return;
+    clearTimeout(pushTimer);
+    pushTimer = setTimeout(() => {
+      supa.from("habit_states")
+        .upsert({ user_id: user.id, data: state, updated_at: new Date().toISOString() })
+        .then(({ error }) => { if (error) console.warn("cloud push:", error.message); });
+    }, 600);
+  }
+
+  async function pullCloud() {
+    if (!supa || !user) return;
+    const { data, error } = await supa.from("habit_states").select("data").eq("user_id", user.id).maybeSingle();
+    if (error) { console.warn("cloud pull:", error.message); return; }
+    if (data && data.data && Array.isArray(data.data.habits)) {
+      state = normalize(data.data); save(); render();   // cloud wins on login
+    } else {
+      pushCloud();                                       // first login → seed cloud from local
+    }
+  }
+
+  async function initCloud() {
+    if (!CFG.supabaseUrl || !CFG.supabaseAnonKey) return; // pure local mode
+    accountBtn.style.display = "";
+    try {
+      const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2");
+      supa = createClient(CFG.supabaseUrl, CFG.supabaseAnonKey);
+      const { data } = await supa.auth.getUser();
+      user = data && data.user ? data.user : null;
+      updateAccountUI();
+      if (user) await pullCloud();
+      supa.auth.onAuthStateChange((_e, session) => {
+        const prev = user; user = session && session.user ? session.user : null;
+        updateAccountUI();
+        if (user && (!prev || prev.id !== user.id)) pullCloud();
+      });
+    } catch (err) {
+      console.warn("Supabase init failed:", err);
+      accountBtn.style.display = "none";
+    }
+  }
+
+  accountBtn.addEventListener("click", async () => {
+    if (!supa) return;
+    if (user) { await supa.auth.signOut(); user = null; updateAccountUI(); return; }
+    const email = prompt("Podaj e-mail — wyślemy link do logowania:");
+    if (!email) return;
+    const { error } = await supa.auth.signInWithOtp({ email: email.trim() });
+    alert(error ? ("Błąd: " + error.message) : "Sprawdź skrzynkę i kliknij link, aby się zalogować.");
+  });
+
   render();
+  initCloud();
 })();
 </script>
 </body>

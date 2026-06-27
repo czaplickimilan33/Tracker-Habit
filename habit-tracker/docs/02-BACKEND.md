@@ -8,6 +8,34 @@ Obecnie dane żyją tylko w przeglądarce (`localStorage`). Żeby użytkownik mi
 - Darmowy plan w zupełności wystarczy na start.
 - Działa z czystym JS po stronie przeglądarki — pasuje do tej apki.
 
+## ⚡ Szybki start — synchronizacja jest już wbudowana w apkę
+
+Aplikacja (`app.html`) ma **gotową, opcjonalną synchronizację**. Włączasz ją w 3 krokach:
+
+1. Załóż projekt Supabase, skopiuj **Project URL** i **anon key**.
+2. W **SQL Editor** uruchom (model „jeden dokument na użytkownika" — najprostszy):
+
+   ```sql
+   create table habit_states (
+     user_id uuid primary key references auth.users (id) on delete cascade,
+     data jsonb not null default '{}'::jsonb,
+     updated_at timestamptz default now()
+   );
+   alter table habit_states enable row level security;
+   create policy "own state - all" on habit_states
+     for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+   ```
+
+3. Wpisz `supabaseUrl` i `supabaseAnonKey` w pliku **`config.js`**.
+
+Gotowe — w apce pojawi się przycisk **Zaloguj** (logowanie magic-linkiem), a nawyki będą się synchronizować między urządzeniami. Dopóki `config.js` jest pusty, apka działa w 100% lokalnie.
+
+> Włącz w Supabase **Auth → Email** (magic link). W **URL Configuration** dodaj adres swojej apki (np. `https://twoja-domena/app`) do *Redirect URLs*.
+
+---
+
+Poniżej pełniejszy wariant (osobne wiersze per nawyk), jeśli kiedyś będziesz chciał zaawansowane zapytania/statystyki po stronie bazy.
+
 ## Krok 1 — Projekt Supabase
 1. Załóż konto na <https://supabase.com> → **New project**.
 2. Zapisz **Project URL** i **anon public key** (Settings → API).
