@@ -159,12 +159,43 @@
   footer a { color: var(--muted); cursor: pointer; text-decoration: underline; }
   input[type=file] { display: none; }
 
+  /* stats view */
+  .stats { padding: 18px; }
+  .statgrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 22px; }
+  .stat { background: var(--panel-2); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+  .stat .num { font-size: 26px; font-weight: 800; line-height: 1.1; }
+  .stat .num .u { font-size: 15px; color: var(--muted); font-weight: 600; }
+  .stat .lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-top: 4px; }
+  .stats h3 { font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; margin: 8px 0 12px; }
+  .statbars { display: flex; align-items: flex-end; gap: 3px; height: 90px; margin-bottom: 6px; }
+  .statbars .b { flex: 1; background: linear-gradient(180deg, var(--accent), color-mix(in srgb, var(--accent) 55%, #fff)); border-radius: 3px 3px 0 0; min-height: 2px; }
+  .statbars .b.today { background: linear-gradient(180deg, var(--accent-2), #4fd0c8); }
+  .statbars .b.zero { background: var(--line); }
+  .axis { display: flex; justify-content: space-between; color: var(--muted); font-size: 11px; margin-bottom: 24px; }
+  .sttable { width: 100%; border-collapse: collapse; }
+  .sttable th, .sttable td { text-align: left; padding: 11px 8px; border-bottom: 1px solid var(--line); font-size: 14px; }
+  .sttable th { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .5px; }
+  .sttable td.r, .sttable th.r { text-align: right; }
+  .sttable .nm { display: flex; align-items: center; gap: 8px; }
+  .sttable .nm .dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+  .barmini { width: 90px; height: 7px; border-radius: 4px; background: var(--line); overflow: hidden; display: inline-block; vertical-align: middle; }
+  .barmini > i { display: block; height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-2)); }
+
+  /* reminder popover */
+  .popover { position: absolute; z-index: 60; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px; box-shadow: var(--shadow); width: 270px; }
+  .popover h4 { margin: 0 0 8px; font-size: 14px; }
+  .popover label { display: flex; align-items: center; gap: 8px; font-size: 14px; margin: 12px 0; }
+  .popover input[type=time] { background: var(--panel-2); border: 1px solid var(--line); color: var(--text); border-radius: 8px; padding: 6px 8px; font: inherit; }
+  .popover .muted { color: var(--muted); font-size: 12px; line-height: 1.45; }
+
   @media (max-width: 680px) {
     .row { grid-template-columns: 16px 1fr repeat(7, 1fr) 0 30px; font-size: 13px; }
     .streak { display: none; }
     .cell { width: 30px; height: 30px; }
     .month .mrow { grid-template-columns: 90px 1fr 0; }
     .mstreak { display: none; }
+    .statgrid { grid-template-columns: repeat(2, 1fr); }
+    .barmini { width: 60px; }
   }
 </style>
 </head>
@@ -180,6 +211,7 @@
     </div>
     <div class="right">
       <button class="btn" id="accountBtn" title="Zaloguj / synchronizuj" style="display:none">Zaloguj</button>
+      <button class="btn icon" id="remindBtn" title="Codzienne przypomnienie">🔔</button>
       <button class="btn icon" id="themeBtn" title="Toggle theme">🌙</button>
       <div class="summary">
         <div class="ring" id="ring">
@@ -206,6 +238,7 @@
     <div class="seg" id="viewSeg">
       <button data-view="week" class="active">Week</button>
       <button data-view="month">Month</button>
+      <button data-view="stats">Stats</button>
     </div>
     <div class="nav">
       <button class="btn icon" id="prev">‹</button>
@@ -332,7 +365,13 @@
   const bars = document.getElementById("bars");
   const chartcard = document.getElementById("chartcard");
 
-  function render() { view === "week" ? renderWeek() : renderMonth(); }
+  const navEl = document.querySelector(".nav");
+  function render() {
+    navEl.style.visibility = view === "stats" ? "hidden" : "visible";
+    if (view === "stats") renderStats();
+    else if (view === "month") renderMonth();
+    else renderWeek();
+  }
 
   function renderWeek() {
     chartcard.style.display = "";
@@ -449,6 +488,77 @@
     document.getElementById("ringFg").style.strokeDashoffset = (2 * Math.PI * 27) * (1 - pct / 100);
   }
 
+  function doneCount(h) { return Object.keys(h.log).filter(k => h.log[k]).length; }
+
+  function renderStats() {
+    chartcard.style.display = "none";
+    const todayStr = iso(today);
+    const N = 30; // okno analizy: ostatnie 30 dni
+    const windowDates = [];
+    for (let i = N - 1; i >= 0; i--) windowDates.push(iso(addDays(today, -i)));
+
+    // dzienne ukończenie (%) w oknie
+    const total = state.habits.length;
+    const daily = windowDates.map(ds => {
+      if (!total) return 0;
+      const c = state.habits.filter(h => h.log[ds]).length;
+      return Math.round((c / total) * 100);
+    });
+    const avg30 = daily.length ? Math.round(daily.reduce((a, b) => a + b, 0) / daily.length) : 0;
+    const totalCheckins = state.habits.reduce((a, h) => a + doneCount(h), 0);
+    const bestEver = state.habits.reduce((m, h) => Math.max(m, bestStreak(h)), 0);
+
+    grid.innerHTML = "";
+    const wrap = document.createElement("div");
+    wrap.className = ""; // grid already has .stats
+
+    // top stat cards
+    const cards = `
+      <div class="statgrid">
+        <div class="stat"><div class="num">${totalCheckins}</div><div class="lbl">Wszystkich odhaczeń</div></div>
+        <div class="stat"><div class="num">${total}</div><div class="lbl">Aktywnych nawyków</div></div>
+        <div class="stat"><div class="num">${bestEver} <span class="u">dni</span></div><div class="lbl">Najdłuższa seria</div></div>
+        <div class="stat"><div class="num">${avg30}<span class="u">%</span></div><div class="lbl">Średnia (30 dni)</div></div>
+      </div>`;
+
+    // 30-day bars
+    let bars = "";
+    daily.forEach((p, i) => {
+      const isToday = windowDates[i] === todayStr;
+      bars += `<div class="b${p === 0 ? " zero" : ""}${isToday ? " today" : ""}" style="height:${Math.max(p, 2)}%" title="${windowDates[i]}: ${p}%"></div>`;
+    });
+    const chart = `<h3>Ukończenie — ostatnie 30 dni</h3><div class="statbars">${bars}</div>
+      <div class="axis"><span>${windowDates[0].slice(5)}</span><span>dziś</span></div>`;
+
+    // per-habit table
+    let rows = "";
+    if (!total) {
+      rows = `<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:26px">Brak nawyków — dodaj pierwszy, aby zobaczyć statystyki.</td></tr>`;
+    } else {
+      state.habits.forEach(h => {
+        const last30 = windowDates.filter(ds => h.log[ds]).length;
+        const rate = Math.round((last30 / N) * 100);
+        rows += `<tr>
+          <td><span class="nm"><span class="dot" style="background:${h.color}"></span>${escapeHtml(h.name)}</span></td>
+          <td class="r">${doneCount(h)}</td>
+          <td class="r">${streak(h)} 🔥</td>
+          <td class="r">${bestStreak(h)}</td>
+          <td class="r"><span class="barmini"><i style="width:${rate}%"></i></span> ${rate}%</td>
+        </tr>`;
+      });
+    }
+    const table = `<h3>Według nawyku (ostatnie 30 dni)</h3>
+      <table class="sttable"><thead><tr>
+        <th>Nawyk</th><th class="r">Razem</th><th class="r">Seria</th><th class="r">Rekord</th><th class="r">30 dni</th>
+      </tr></thead><tbody>${rows}</tbody></table>`;
+
+    wrap.innerHTML = cards + chart + table;
+    grid.appendChild(wrap);
+
+    const done = state.habits.filter(h => h.log[todayStr]).length;
+    setSummary(done, total);
+  }
+
   function emptyEl() {
     const e = document.createElement("div"); e.className = "empty";
     e.innerHTML = "<h3>No habits yet</h3><div>Add your first habit above to start tracking.</div>";
@@ -543,7 +653,7 @@
     const b = e.target.closest("button[data-view]"); if (!b) return;
     view = b.dataset.view; offset = 0;
     document.querySelectorAll("#viewSeg button").forEach(x => x.classList.toggle("active", x === b));
-    grid.className = view === "month" ? "grid month" : "grid";
+    grid.className = "grid" + (view === "month" ? " month" : "") + (view === "stats" ? " stats" : "");
     render();
   });
   document.getElementById("prev").addEventListener("click", () => { offset--; render(); });
@@ -645,6 +755,80 @@
     const { error } = await supa.auth.signInWithOtp({ email: email.trim() });
     alert(error ? ("Błąd: " + error.message) : "Sprawdź skrzynkę i kliknij link, aby się zalogować.");
   });
+
+  // ---- daily reminder (browser notifications) ----
+  const REMIND_KEY = "habitTracker.reminder";
+  const remindBtn = document.getElementById("remindBtn");
+  let reminderTimer = null;
+
+  function loadReminder() { try { return JSON.parse(localStorage.getItem(REMIND_KEY)) || {}; } catch (e) { return {}; } }
+  function saveReminder(r) { localStorage.setItem(REMIND_KEY, JSON.stringify(r)); }
+  function remainingToday() { const ts = iso(today); return state.habits.filter(h => !h.log[ts]); }
+
+  function updateRemindBtn() {
+    const r = loadReminder();
+    remindBtn.textContent = r.enabled ? "🔔" : "🔕";
+    remindBtn.title = r.enabled ? `Przypomnienie o ${r.time || "20:00"} — kliknij, by zmienić` : "Codzienne przypomnienie (wyłączone)";
+  }
+
+  function scheduleReminder() {
+    clearTimeout(reminderTimer);
+    const r = loadReminder();
+    if (!r.enabled || !r.time) return;
+    const [hh, mm] = r.time.split(":").map(Number);
+    const now = new Date();
+    const next = new Date(); next.setHours(hh, mm, 0, 0);
+    if (next <= now) next.setDate(next.getDate() + 1);
+    reminderTimer = setTimeout(() => { fireReminder(); scheduleReminder(); }, next - now);
+  }
+
+  function fireReminder() {
+    if (!("Notification" in window) || Notification.permission !== "granted") return;
+    const left = remainingToday();
+    const body = left.length
+      ? `Do odhaczenia dziś: ${left.slice(0, 3).map(h => h.name).join(", ")}${left.length > 3 ? ` i ${left.length - 3} więcej` : ""}.`
+      : "Wszystko odhaczone na dziś — świetna robota! 🎉";
+    try { new Notification("🎯 Habit Tracker", { body }); } catch (e) {}
+  }
+
+  function closePopover() { const p = document.getElementById("popover"); if (p) p.remove(); }
+  function openReminder() {
+    closePopover();
+    const r = loadReminder();
+    const pop = document.createElement("div"); pop.className = "popover"; pop.id = "popover";
+    pop.innerHTML = `
+      <h4>🔔 Codzienne przypomnienie</h4>
+      <label><input type="checkbox" id="rEnabled" ${r.enabled ? "checked" : ""}/> Włącz przypomnienie</label>
+      <label>O godzinie <input type="time" id="rTime" value="${r.time || "20:00"}"/></label>
+      <p class="muted">Powiadomienie pojawi się, gdy karta aplikacji jest otwarta, i przypomni o niezrobionych nawykach.</p>
+      <button class="btn primary" id="rSave" style="width:100%">Zapisz</button>`;
+    document.body.appendChild(pop);
+    const rect = remindBtn.getBoundingClientRect();
+    pop.style.top = (rect.bottom + window.scrollY + 6) + "px";
+    pop.style.left = (Math.max(8, Math.min(rect.left, window.innerWidth - 286)) + window.scrollX) + "px";
+
+    document.getElementById("rSave").addEventListener("click", async () => {
+      const enabled = document.getElementById("rEnabled").checked;
+      const time = document.getElementById("rTime").value || "20:00";
+      if (enabled && "Notification" in window && Notification.permission === "default") {
+        await Notification.requestPermission();
+      }
+      if (enabled && (!("Notification" in window) || Notification.permission !== "granted")) {
+        alert("Powiadomienia są zablokowane w przeglądarce. Włącz je w ustawieniach strony, aby otrzymywać przypomnienia.");
+      }
+      saveReminder({ enabled, time });
+      updateRemindBtn(); scheduleReminder(); closePopover();
+      if (enabled && "Notification" in window && Notification.permission === "granted") {
+        try { new Notification("🎯 Habit Tracker", { body: `Przypomnienie ustawione na ${time}.` }); } catch (e) {}
+      }
+    });
+  }
+  remindBtn.addEventListener("click", openReminder);
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest(".popover") && !e.target.closest("#remindBtn")) closePopover();
+  });
+  updateRemindBtn();
+  scheduleReminder();
 
   render();
   initCloud();

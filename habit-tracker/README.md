@@ -40,7 +40,9 @@ See the guides in `docs/`:
 - **Recolor** — click a habit's colored dot to pick from a palette.
 - **Streaks + records** — each habit shows its current 🔥 streak and its all-time best.
 - **Today's progress ring** — shows how many of today's habits are done.
-- **Week / Month views** — toggle between a weekly grid and a month heatmap (calendar-style dots, one per day). Both are clickable. Month view also shows an overall completion % for the month.
+- **Week / Month / Stats views** — toggle between a weekly grid, a month heatmap (calendar-style dots, one per day, with an overall month %), and a **Stats dashboard**.
+- **Stats dashboard** — total check-ins, active habits, longest streak, 30-day average, a 30-day completion chart, and a per-habit table (total / current streak / record / 30-day rate).
+- **Daily reminder** — 🔔 button sets a daily browser notification reminding you of unfinished habits (works while the tab is open).
 - **Period navigation** — use ‹ › to look back at previous weeks or months (you can't mark future days).
 - **Week chart** — bars show your completion percentage for each day of the visible week.
 - **Drag to reorder** — grab the ⠿ handle and drag a habit up or down (week view).
