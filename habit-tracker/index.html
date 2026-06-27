@@ -1,583 +1,124 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pl">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Habit Tracker</title>
+<title>Habit Tracker — buduj nawyki, licz serie</title>
+<meta name="description" content="Prosty, szybki tracker nawyków. Zaznaczaj dni, buduj serie, śledź postępy tygodniowo i miesięcznie. Działa w przeglądarce, bez rejestracji." />
+<meta property="og:title" content="Habit Tracker — buduj nawyki, licz serie" />
+<meta property="og:description" content="Prosty tracker nawyków. Serie, widok tygodnia i miesiąca, motyw jasny/ciemny, eksport danych." />
+<meta property="og:image" content="./assets/screenshot.png" />
+<meta property="og:type" content="website" />
 <style>
   :root {
-    --bg: #0f1220;
-    --panel: #181c2e;
-    --panel-2: #1f2440;
-    --line: #2a3052;
-    --text: #e8ebff;
-    --muted: #9aa3c7;
-    --accent: #6c8cff;
-    --accent-2: #57e0b0;
-    --danger: #ff6b81;
-    --shadow: 0 10px 30px rgba(0,0,0,.35);
-    --heat-empty: #20253f;
+    --bg:#0f1220; --panel:#181c2e; --panel-2:#1f2440; --line:#2a3052;
+    --text:#e8ebff; --muted:#9aa3c7; --accent:#6c8cff; --accent-2:#57e0b0;
+    --shadow:0 18px 50px rgba(0,0,0,.45);
   }
-  html[data-theme="light"] {
-    --bg: #eef1fb;
-    --panel: #ffffff;
-    --panel-2: #f1f3fc;
-    --line: #dde1f2;
-    --text: #1b2042;
-    --muted: #6b73a0;
-    --accent: #4f6cff;
-    --accent-2: #1fae84;
-    --danger: #e5435c;
-    --shadow: 0 10px 30px rgba(60,70,140,.15);
-    --heat-empty: #e6e9f7;
-  }
-  * { box-sizing: border-box; }
-  html, body { margin: 0; }
+  * { box-sizing:border-box; }
+  html,body { margin:0; }
   body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background: radial-gradient(1200px 700px at 20% -10%, color-mix(in srgb, var(--accent) 14%, var(--bg)) 0%, var(--bg) 55%);
-    color: var(--text);
-    min-height: 100vh;
-    padding: 28px 16px 60px;
-    transition: background .25s, color .25s;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:radial-gradient(1200px 700px at 75% -10%, #1b2140 0%, var(--bg) 55%);
+    color:var(--text); min-height:100vh; line-height:1.55;
   }
-  .wrap { max-width: 920px; margin: 0 auto; }
-  header.app {
-    display: flex; align-items: center; justify-content: space-between;
-    gap: 16px; margin-bottom: 22px; flex-wrap: wrap;
-  }
-  .brand { display: flex; align-items: center; gap: 12px; }
-  .logo {
-    width: 44px; height: 44px; border-radius: 12px;
-    background: linear-gradient(135deg, var(--accent), var(--accent-2));
-    display: grid; place-items: center; font-size: 22px; box-shadow: var(--shadow);
-  }
-  h1 { font-size: 22px; margin: 0; letter-spacing: .3px; }
-  .sub { color: var(--muted); font-size: 13px; margin-top: 2px; }
+  a { color:inherit; }
+  .wrap { max-width:1040px; margin:0 auto; padding:0 20px; }
 
-  .right { display: flex; align-items: center; gap: 12px; }
-  .summary {
-    display: flex; align-items: center; gap: 18px;
-    background: var(--panel); border: 1px solid var(--line);
-    border-radius: 16px; padding: 14px 18px; box-shadow: var(--shadow);
-  }
-  .ring { width: 64px; height: 64px; position: relative; }
-  .ring svg { transform: rotate(-90deg); }
-  .ring .pct { position: absolute; inset: 0; display: grid; place-items: center; font-weight: 700; font-size: 15px; }
-  .summary .meta { font-size: 13px; color: var(--muted); }
-  .summary .meta b { color: var(--text); font-size: 16px; }
+  nav { display:flex; align-items:center; justify-content:space-between; padding:22px 0; }
+  .brand { display:flex; align-items:center; gap:12px; font-weight:700; font-size:18px; }
+  .logo { width:40px; height:40px; border-radius:11px; background:linear-gradient(135deg,var(--accent),var(--accent-2)); display:grid; place-items:center; font-size:20px; box-shadow:var(--shadow); }
+  .btn { display:inline-block; border:1px solid var(--line); background:var(--panel-2); color:var(--text); padding:11px 20px; border-radius:11px; text-decoration:none; font-weight:600; cursor:pointer; transition:.15s; }
+  .btn:hover { border-color:var(--accent); transform:translateY(-1px); }
+  .btn.primary { background:linear-gradient(135deg,var(--accent),#8aa0ff); border:none; color:#fff; }
+  .btn.lg { padding:15px 28px; font-size:17px; }
 
-  .toolbar { display: flex; gap: 10px; align-items: center; margin: 22px 0 14px; flex-wrap: wrap; }
-  .nav { display: flex; align-items: center; gap: 8px; }
-  .nav .label { font-size: 14px; color: var(--muted); min-width: 168px; text-align: center; }
-  button, input[type=text] { font: inherit; color: var(--text); }
-  .btn {
-    background: var(--panel-2); border: 1px solid var(--line); color: var(--text);
-    border-radius: 10px; padding: 9px 14px; cursor: pointer; transition: .15s;
-  }
-  .btn:hover { border-color: var(--accent); transform: translateY(-1px); }
-  .btn.primary { background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 60%, #fff)); border: none; font-weight: 600; color: #fff; }
-  .btn.icon { padding: 9px 12px; }
-  .spacer { flex: 1; }
+  .hero { display:grid; grid-template-columns:1fr 1.05fr; gap:48px; align-items:center; padding:40px 0 70px; }
+  .pill { display:inline-block; font-size:12px; letter-spacing:.6px; text-transform:uppercase; color:var(--accent-2); background:color-mix(in srgb,var(--accent-2) 14%,transparent); border:1px solid color-mix(in srgb,var(--accent-2) 30%,transparent); padding:5px 12px; border-radius:999px; margin-bottom:18px; }
+  h1 { font-size:44px; line-height:1.1; margin:0 0 18px; letter-spacing:-.5px; }
+  h1 .grad { background:linear-gradient(135deg,var(--accent),var(--accent-2)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .lead { font-size:18px; color:var(--muted); margin:0 0 28px; max-width:46ch; }
+  .cta { display:flex; gap:14px; align-items:center; flex-wrap:wrap; }
+  .cta .note { font-size:13px; color:var(--muted); }
+  .shot { border-radius:18px; border:1px solid var(--line); box-shadow:var(--shadow); width:100%; display:block; }
+  .shotwrap { position:relative; }
+  .shotwrap::after { content:""; position:absolute; inset:auto 0 -30px 0; height:60px; background:radial-gradient(60% 100% at 50% 0%, color-mix(in srgb,var(--accent) 30%,transparent), transparent); filter:blur(20px); z-index:-1; }
 
-  .seg { display: inline-flex; background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; padding: 3px; }
-  .seg button { border: none; background: transparent; color: var(--muted); padding: 6px 14px; border-radius: 8px; cursor: pointer; font: inherit; transition: .15s; }
-  .seg button.active { background: var(--accent); color: #fff; font-weight: 600; }
+  section.features { padding:30px 0 60px; }
+  .grid { display:grid; grid-template-columns:repeat(3,1fr); gap:18px; }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:22px; box-shadow:var(--shadow); }
+  .card .ico { font-size:24px; margin-bottom:10px; }
+  .card h3 { margin:0 0 6px; font-size:16px; }
+  .card p { margin:0; color:var(--muted); font-size:14px; }
 
-  .addbar { display: flex; gap: 10px; flex: 1; min-width: 220px; }
-  .addbar input { flex: 1; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; outline: none; }
-  .addbar input:focus { border-color: var(--accent); }
+  section.cta-band { text-align:center; padding:56px 0 64px; }
+  section.cta-band h2 { font-size:30px; margin:0 0 10px; }
+  section.cta-band p { color:var(--muted); margin:0 0 26px; }
 
-  .grid { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; box-shadow: var(--shadow); }
-  .row { display: grid; grid-template-columns: 18px 1fr repeat(7, 46px) 64px 36px; align-items: center; gap: 6px; padding: 10px 14px; border-bottom: 1px solid var(--line); }
-  .row.head { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .6px; background: var(--panel-2); }
-  .row:last-child { border-bottom: none; }
-  .row.dragging { opacity: .4; }
-  .row.dragover { border-top: 2px solid var(--accent); }
-  .grip { cursor: grab; color: var(--muted); text-align: center; user-select: none; line-height: 1; }
-  .grip:active { cursor: grabbing; }
-  .row.head .grip { cursor: default; }
-  .row .name { font-weight: 600; display: flex; align-items: center; gap: 8px; min-width: 0; }
-  .row .name .dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
-  .row .name span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .day { text-align: center; font-size: 12px; }
-  .day small { display: block; color: var(--muted); font-size: 10px; }
-  .day.today { color: var(--accent); font-weight: 700; }
+  footer { border-top:1px solid var(--line); padding:26px 0; color:var(--muted); font-size:13px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; }
+  footer a { color:var(--muted); text-decoration:none; }
+  footer a:hover { color:var(--text); }
 
-  .cell { width: 34px; height: 34px; margin: 0 auto; border-radius: 9px; border: 1.5px solid var(--line); background: transparent; cursor: pointer; display: grid; place-items: center; transition: .12s; color: transparent; }
-  .cell:hover { border-color: var(--accent); }
-  .cell.done { background: linear-gradient(135deg, var(--accent-2), color-mix(in srgb, var(--accent-2) 70%, #2bb)); border-color: transparent; color: #06231b; font-weight: 800; }
-  .cell.future { opacity: .35; cursor: not-allowed; }
-  .cell.future:hover { border-color: var(--line); }
-
-  .streak { text-align: center; font-size: 13px; color: var(--muted); }
-  .streak b { color: var(--accent-2); }
-  .del { background: transparent; border: none; color: var(--muted); cursor: pointer; font-size: 16px; padding: 6px; border-radius: 8px; }
-  .del:hover { color: var(--danger); background: color-mix(in srgb, var(--danger) 12%, transparent); }
-
-  .row .name .dot { cursor: pointer; box-shadow: 0 0 0 0 transparent; transition: box-shadow .15s; }
-  .row .name .dot:hover { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent); }
-  .hname { cursor: text; border-radius: 5px; padding: 1px 3px; }
-  .hname:hover { background: var(--panel-2); outline: 1px dashed var(--line); }
-  input.rename { background: var(--panel-2); border: 1px solid var(--accent); border-radius: 6px; padding: 3px 6px; outline: none; width: 100%; min-width: 0; }
-  .streak small { display: block; font-size: 10px; color: var(--muted); }
-
-  .palette { position: absolute; z-index: 50; display: flex; gap: 6px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px; box-shadow: var(--shadow); }
-  .palette .sw { width: 22px; height: 22px; border-radius: 6px; border: 2px solid transparent; cursor: pointer; padding: 0; }
-  .palette .sw:hover { border-color: var(--text); }
-
-  .empty { padding: 46px 20px; text-align: center; color: var(--muted); }
-  .empty h3 { color: var(--text); margin: 0 0 6px; }
-
-  /* month heatmap */
-  .month { padding: 18px; }
-  .month .mrow { display: grid; grid-template-columns: 150px 1fr 36px; gap: 12px; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--line); }
-  .month .mrow:last-child { border-bottom: none; }
-  .month .mrow.head { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .6px; }
-  .heat { display: grid; grid-template-columns: repeat(31, 1fr); gap: 4px; }
-  .heat .hd { aspect-ratio: 1; border-radius: 4px; background: var(--heat-empty); cursor: pointer; transition: .1s; position: relative; }
-  .heat .hd.on { background: var(--accent-2); }
-  .heat .hd.today { outline: 2px solid var(--accent); outline-offset: 1px; }
-  .heat .hd.future { opacity: .25; cursor: not-allowed; }
-  .heat .hd.blank { background: transparent; cursor: default; }
-  .heat .hd:not(.future):not(.blank):hover { transform: scale(1.25); }
-  .month .daynums { display: grid; grid-template-columns: repeat(31, 1fr); gap: 4px; color: var(--muted); font-size: 9px; text-align: center; }
-  .mstreak { text-align: center; font-size: 13px; color: var(--muted); }
-  .mstreak b { color: var(--accent-2); }
-
-  .chartcard { margin-top: 22px; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 18px; box-shadow: var(--shadow); }
-  .chartcard h2 { font-size: 14px; margin: 0 0 16px; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; }
-  .bars { display: flex; align-items: flex-end; gap: 12px; height: 140px; }
-  .bar { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; height: 100%; justify-content: flex-end; }
-  .bar .track { width: 100%; max-width: 46px; background: var(--panel-2); border-radius: 8px 8px 4px 4px; height: 100%; display: flex; align-items: flex-end; overflow: hidden; }
-  .bar .fill { width: 100%; background: linear-gradient(180deg, var(--accent), color-mix(in srgb, var(--accent) 60%, #fff)); border-radius: 8px 8px 0 0; transition: height .5s cubic-bezier(.2,.8,.2,1); min-height: 2px; }
-  .bar .fill.full { background: linear-gradient(180deg, var(--accent-2), #4fd0c8); }
-  .bar .lbl { font-size: 11px; color: var(--muted); }
-  .bar .lbl.today { color: var(--accent); font-weight: 700; }
-
-  footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 30px; }
-  footer a { color: var(--muted); cursor: pointer; text-decoration: underline; }
-  input[type=file] { display: none; }
-
-  @media (max-width: 680px) {
-    .row { grid-template-columns: 16px 1fr repeat(7, 1fr) 0 30px; font-size: 13px; }
-    .streak { display: none; }
-    .cell { width: 30px; height: 30px; }
-    .month .mrow { grid-template-columns: 90px 1fr 0; }
-    .mstreak { display: none; }
+  @media (max-width:820px) {
+    .hero { grid-template-columns:1fr; gap:34px; padding:20px 0 40px; }
+    h1 { font-size:34px; }
+    .grid { grid-template-columns:1fr; }
+    nav .btn:not(.primary) { display:none; }
   }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <header class="app">
-    <div class="brand">
-      <div class="logo">🎯</div>
-      <div>
-        <h1>Habit Tracker</h1>
-        <div class="sub">Tap a day to mark a habit done. Build your streaks.</div>
+  <nav>
+    <div class="brand"><span class="logo">🎯</span> Habit Tracker</div>
+    <div>
+      <a class="btn" href="#funkcje">Funkcje</a>
+      <a class="btn primary" href="./app.html">Otwórz aplikację →</a>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div>
+      <span class="pill">Za darmo · bez rejestracji</span>
+      <h1>Buduj nawyki. <span class="grad">Licz serie.</span></h1>
+      <p class="lead">Zaznaczaj dni jednym kliknięciem, obserwuj jak rosną Twoje serie 🔥 i sprawdzaj postępy w widoku tygodnia lub miesiąca. Wszystko działa w przeglądarce — nic nie instalujesz.</p>
+      <div class="cta">
+        <a class="btn primary lg" href="./app.html">Zacznij teraz →</a>
+        <span class="note">Działa od razu · dane zostają u Ciebie</span>
       </div>
     </div>
-    <div class="right">
-      <button class="btn icon" id="themeBtn" title="Toggle theme">🌙</button>
-      <div class="summary">
-        <div class="ring" id="ring">
-          <svg width="64" height="64" viewBox="0 0 64 64">
-            <circle cx="32" cy="32" r="27" fill="none" stroke="var(--line)" stroke-width="8"/>
-            <circle id="ringFg" cx="32" cy="32" r="27" fill="none" stroke="url(#g)" stroke-width="8" stroke-linecap="round" stroke-dasharray="169.6" stroke-dashoffset="169.6"/>
-            <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stop-color="#6c8cff"/><stop offset="1" stop-color="#57e0b0"/>
-            </linearGradient></defs>
-          </svg>
-          <div class="pct" id="ringPct">0%</div>
-        </div>
-        <div class="meta">Today's progress<br><b id="todayCount">0 / 0</b> habits done</div>
-      </div>
+    <div class="shotwrap">
+      <img class="shot" src="./assets/screenshot.png" alt="Zrzut ekranu aplikacji Habit Tracker" loading="eager" />
     </div>
   </header>
 
-  <div class="toolbar">
-    <div class="addbar">
-      <input id="newHabit" type="text" placeholder="Add a habit (e.g. Drink water, Read 20 min)…" maxlength="40" />
-      <button class="btn primary" id="addBtn">+ Add</button>
+  <section class="features" id="funkcje">
+    <div class="grid">
+      <div class="card"><div class="ico">✅</div><h3>Klik = gotowe</h3><p>Zaznacz dzień jednym kliknięciem. Kliknij ponownie, żeby cofnąć. Prościej się nie da.</p></div>
+      <div class="card"><div class="ico">🔥</div><h3>Serie i rekordy</h3><p>Każdy nawyk pokazuje aktualną serię oraz Twój najdłuższy rekord wszech czasów.</p></div>
+      <div class="card"><div class="ico">🗓️</div><h3>Tydzień i miesiąc</h3><p>Przełączaj między siatką tygodniową a miesięczną mapą cieplną z procentem ukończenia.</p></div>
+      <div class="card"><div class="ico">🎨</div><h3>Twój styl</h3><p>Zmień nazwę i kolor nawyku, przeciągnij, by zmienić kolejność, włącz motyw jasny lub ciemny.</p></div>
+      <div class="card"><div class="ico">💾</div><h3>Twoje dane</h3><p>Wszystko zapisuje się lokalnie w przeglądarce. Wyeksportuj kopię do pliku w każdej chwili.</p></div>
+      <div class="card"><div class="ico">⚡</div><h3>Błyskawicznie</h3><p>Jeden plik, zero zależności, brak logowania. Otwiera się natychmiast i działa offline.</p></div>
     </div>
-    <div class="spacer"></div>
-    <div class="seg" id="viewSeg">
-      <button data-view="week" class="active">Week</button>
-      <button data-view="month">Month</button>
-    </div>
-    <div class="nav">
-      <button class="btn icon" id="prev">‹</button>
-      <div class="label" id="periodLabel">This week</div>
-      <button class="btn icon" id="next">›</button>
-    </div>
-  </div>
+  </section>
 
-  <div class="grid" id="grid"></div>
-
-  <div class="chartcard" id="chartcard">
-    <h2>Week completion</h2>
-    <div class="bars" id="bars"></div>
-  </div>
+  <section class="cta-band">
+    <h2>Gotowy zbudować lepszy nawyk?</h2>
+    <p>Zacznij dziś — pierwsza seria zaczyna się od jednego kliknięcia.</p>
+    <a class="btn primary lg" href="./app.html">Otwórz Habit Tracker →</a>
+  </section>
 
   <footer>
-    Saved automatically in your browser ·
-    <a id="exportBtn">Export data</a> ·
-    <a id="importBtn">Import data</a>
-    <input type="file" id="importFile" accept="application/json,.json" />
+    <div>© <span id="y"></span> Habit Tracker</div>
+    <div>
+      <a href="./app.html">Aplikacja</a> ·
+      <a href="#funkcje">Funkcje</a> ·
+      <a href="./privacy.html">Prywatność</a> ·
+      <a href="./terms.html">Regulamin</a>
+    </div>
   </footer>
 </div>
-
-<script>
-(function () {
-  "use strict";
-  const STORE_KEY = "habitTracker.v1";
-  const THEME_KEY = "habitTracker.theme";
-  const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-  const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-  const COLORS = ["#6c8cff","#57e0b0","#ffb86b","#ff6b81","#c792ea","#7bdff2","#f2c94c"];
-
-  // ---- date helpers (local time) ----
-  const iso = (d) => {
-    const z = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
-    return z.toISOString().slice(0, 10);
-  };
-  const today = new Date(); today.setHours(0,0,0,0);
-  function startOfWeek(d) {
-    const x = new Date(d); x.setHours(0,0,0,0);
-    const day = (x.getDay() + 6) % 7;
-    x.setDate(x.getDate() - day);
-    return x;
-  }
-  function addDays(d, n) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }
-
-  // ---- state ----
-  let state = load();
-  let view = "week";        // "week" | "month"
-  let offset = 0;           // periods from current (negative = past)
-
-  function load() {
-    try { const raw = localStorage.getItem(STORE_KEY); if (raw) return normalize(JSON.parse(raw)); } catch (e) {}
-    return { habits: [
-      { id: id(), name: "Drink water", color: COLORS[0], log: {} },
-      { id: id(), name: "Read 20 min", color: COLORS[1], log: {} },
-      { id: id(), name: "Exercise", color: COLORS[2], log: {} },
-    ]};
-  }
-  function normalize(s) {
-    if (!s || !Array.isArray(s.habits)) return { habits: [] };
-    s.habits = s.habits.map(h => ({ id: h.id || id(), name: String(h.name || "Untitled"), color: h.color || COLORS[0], log: h.log && typeof h.log === "object" ? h.log : {} }));
-    return s;
-  }
-  function save() { localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
-  function id() { return Math.random().toString(36).slice(2, 9); }
-
-  // ---- actions ----
-  function addHabit(name) {
-    name = name.trim(); if (!name) return;
-    state.habits.push({ id: id(), name, color: COLORS[state.habits.length % COLORS.length], log: {} });
-    save(); render();
-  }
-  function removeHabit(hid) { state.habits = state.habits.filter(h => h.id !== hid); save(); render(); }
-  function toggle(hid, dateStr) {
-    const h = state.habits.find(x => x.id === hid); if (!h) return;
-    if (h.log[dateStr]) delete h.log[dateStr]; else h.log[dateStr] = 1;
-    save(); render();
-  }
-  function reorder(fromId, toId) {
-    if (fromId === toId) return;
-    const arr = state.habits;
-    const from = arr.findIndex(h => h.id === fromId);
-    const to = arr.findIndex(h => h.id === toId);
-    if (from < 0 || to < 0) return;
-    const [moved] = arr.splice(from, 1);
-    arr.splice(to, 0, moved);
-    save(); render();
-  }
-  function renameHabit(hid, name) {
-    const h = state.habits.find(x => x.id === hid); if (!h) return;
-    name = name.trim(); if (name) h.name = name.slice(0, 40);
-    save(); render();
-  }
-  function setColor(hid, color) {
-    const h = state.habits.find(x => x.id === hid); if (!h) return;
-    h.color = color; save(); render();
-  }
-  function streak(h) {
-    let count = 0, cursor = new Date(today);
-    if (!h.log[iso(cursor)]) cursor = addDays(cursor, -1);
-    while (h.log[iso(cursor)]) { count++; cursor = addDays(cursor, -1); }
-    return count;
-  }
-  function bestStreak(h) {
-    const dates = Object.keys(h.log).filter(k => h.log[k]).sort();
-    let best = 0, cur = 0, prev = null;
-    for (const ds of dates) {
-      if (prev && (Date.parse(ds) - Date.parse(prev)) === 86400000) cur += 1; else cur = 1;
-      if (cur > best) best = cur;
-      prev = ds;
-    }
-    return best;
-  }
-
-  // ---- render ----
-  const grid = document.getElementById("grid");
-  const bars = document.getElementById("bars");
-  const chartcard = document.getElementById("chartcard");
-
-  function render() { view === "week" ? renderWeek() : renderMonth(); }
-
-  function renderWeek() {
-    chartcard.style.display = "";
-    const weekStart = addDays(startOfWeek(today), offset * 7);
-    const weekDates = DAYS.map((_, i) => addDays(weekStart, i));
-    const todayStr = iso(today);
-
-    const wl = document.getElementById("periodLabel");
-    if (offset === 0) wl.textContent = "This week";
-    else if (offset === -1) wl.textContent = "Last week";
-    else { const o = { month: "short", day: "numeric" }; wl.textContent = weekDates[0].toLocaleDateString(undefined, o) + " – " + weekDates[6].toLocaleDateString(undefined, o); }
-
-    grid.innerHTML = "";
-    const head = document.createElement("div");
-    head.className = "row head";
-    head.innerHTML = "<div class='grip'></div><div>Habit</div>" + weekDates.map(d => {
-      const t = iso(d) === todayStr ? " today" : "";
-      return `<div class="day${t}">${DAYS[(d.getDay()+6)%7]}<small>${d.getDate()}</small></div>`;
-    }).join("") + "<div style='text-align:center'>Streak</div><div></div>";
-    grid.appendChild(head);
-
-    if (state.habits.length === 0) { grid.appendChild(emptyEl()); }
-
-    state.habits.forEach(h => {
-      const row = document.createElement("div");
-      row.className = "row"; row.dataset.id = h.id; row.draggable = true;
-      let cells = "";
-      weekDates.forEach(d => {
-        const ds = iso(d), done = !!h.log[ds], future = d.getTime() > today.getTime();
-        cells += `<button class="cell${done ? " done" : ""}${future ? " future" : ""}" data-h="${h.id}" data-d="${ds}" ${future ? "disabled" : ""} title="${ds}">✓</button>`;
-      });
-      const best = bestStreak(h);
-      row.innerHTML = `<div class="grip" title="Drag to reorder">⠿</div>` +
-        `<div class="name"><span class="dot" data-h="${h.id}" style="background:${h.color}" title="Change color"></span><span class="hname" data-h="${h.id}" title="Click to rename">${escapeHtml(h.name)}</span></div>` +
-        cells + `<div class="streak"><b>${streak(h)}</b> 🔥<small>best ${best}</small></div>` +
-        `<button class="del" data-del="${h.id}" title="Delete habit">✕</button>`;
-      grid.appendChild(row);
-    });
-
-    // today summary
-    const total = state.habits.length, done = state.habits.filter(h => h.log[todayStr]).length;
-    setSummary(done, total);
-
-    // week chart
-    bars.innerHTML = "";
-    weekDates.forEach(d => {
-      const ds = iso(d), future = d.getTime() > today.getTime();
-      const c = total ? state.habits.filter(h => h.log[ds]).length : 0;
-      const p = total ? Math.round((c / total) * 100) : 0;
-      const bar = document.createElement("div"); bar.className = "bar";
-      bar.innerHTML = `<div class="track"><div class="fill${p === 100 ? " full" : ""}" style="height:${future ? 0 : p}%"></div></div>` +
-        `<div class="lbl${ds === todayStr ? " today" : ""}">${DAYS[(d.getDay()+6)%7]}</div>`;
-      bars.appendChild(bar);
-    });
-  }
-
-  function renderMonth() {
-    chartcard.style.display = "none";
-    const base = new Date(today.getFullYear(), today.getMonth() + offset, 1);
-    const year = base.getFullYear(), month = base.getMonth();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const todayStr = iso(today);
-
-    document.getElementById("periodLabel").textContent = MONTHS[month] + " " + year;
-
-    grid.className = "grid month";
-    grid.innerHTML = "";
-    const head = document.createElement("div");
-    head.className = "mrow head";
-    let nums = "";
-    for (let i = 1; i <= 31; i++) nums += `<div>${i <= daysInMonth ? i : ""}</div>`;
-    head.innerHTML = `<div>Habit</div><div class="daynums">${nums}</div><div id="monthPct" style="text-align:center" title="Month completion">–</div>`;
-    grid.appendChild(head);
-
-    if (state.habits.length === 0) grid.appendChild(emptyEl());
-
-    // elapsed days that "count" toward completion this month
-    const isCurrent = year === today.getFullYear() && month === today.getMonth();
-    const isPast = base.getTime() < new Date(today.getFullYear(), today.getMonth(), 1).getTime();
-    const elapsed = isCurrent ? today.getDate() : (isPast ? daysInMonth : 0);
-    let monthDone = 0;
-
-    state.habits.forEach(h => {
-      const row = document.createElement("div"); row.className = "mrow";
-      let cells = "";
-      for (let day = 1; day <= 31; day++) {
-        if (day > daysInMonth) { cells += `<div class="hd blank"></div>`; continue; }
-        const d = new Date(year, month, day);
-        const ds = iso(d), on = !!h.log[ds];
-        const future = d.getTime() > today.getTime();
-        const istoday = ds === todayStr;
-        cells += `<div class="hd${on ? " on" : ""}${future ? " future" : ""}${istoday ? " today" : ""}" data-h="${h.id}" data-d="${ds}" title="${ds}"></div>`;
-      }
-      // count this month
-      let mc = 0; for (let day = 1; day <= daysInMonth; day++) if (h.log[iso(new Date(year, month, day))]) mc++;
-      monthDone += mc;
-      row.innerHTML = `<div class="name"><span class="dot" data-h="${h.id}" style="background:${h.color}" title="Change color"></span><span class="hname" data-h="${h.id}" title="Click to rename">${escapeHtml(h.name)}</span></div>` +
-        `<div class="heat">${cells}</div>` + `<div class="mstreak"><b>${mc}</b></div>`;
-      grid.appendChild(row);
-    });
-
-    const possible = state.habits.length * elapsed;
-    const mp = grid.querySelector("#monthPct");
-    if (mp) mp.textContent = possible ? Math.round((monthDone / possible) * 100) + "%" : "–";
-
-    const total = state.habits.length, done = state.habits.filter(h => h.log[todayStr]).length;
-    setSummary(done, total);
-  }
-
-  function setSummary(done, total) {
-    const pct = total ? Math.round((done / total) * 100) : 0;
-    document.getElementById("todayCount").textContent = `${done} / ${total}`;
-    document.getElementById("ringPct").textContent = pct + "%";
-    document.getElementById("ringFg").style.strokeDashoffset = (2 * Math.PI * 27) * (1 - pct / 100);
-  }
-
-  function emptyEl() {
-    const e = document.createElement("div"); e.className = "empty";
-    e.innerHTML = "<h3>No habits yet</h3><div>Add your first habit above to start tracking.</div>";
-    return e;
-  }
-  function escapeHtml(s) { return s.replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[c])); }
-
-  // ---- events: grid (toggle / delete / heatmap) ----
-  grid.addEventListener("click", (e) => {
-    const dot = e.target.closest(".dot");
-    if (dot && dot.dataset.h) { openPalette(dot); return; }
-    const hname = e.target.closest(".hname");
-    if (hname && hname.dataset.h) { beginRename(hname); return; }
-    const cell = e.target.closest(".cell");
-    if (cell && !cell.disabled) { toggle(cell.dataset.h, cell.dataset.d); return; }
-    const hd = e.target.closest(".hd");
-    if (hd && !hd.classList.contains("future") && !hd.classList.contains("blank") && hd.dataset.h) { toggle(hd.dataset.h, hd.dataset.d); return; }
-    const del = e.target.closest(".del");
-    if (del) { const h = state.habits.find(x => x.id === del.dataset.del); if (h && confirm(`Delete "${h.name}" and its history?`)) removeHabit(del.dataset.del); }
-  });
-
-  // inline rename
-  function beginRename(span) {
-    const hid = span.dataset.h;
-    const h = state.habits.find(x => x.id === hid); if (!h) return;
-    const row = span.closest(".row, .mrow");
-    if (row) row.draggable = false; // let the text input handle selection
-    const input = document.createElement("input");
-    input.type = "text"; input.className = "rename"; input.maxLength = 40; input.value = h.name;
-    span.replaceWith(input); input.focus(); input.select();
-    let done = false;
-    const finish = (commit) => { if (done) return; done = true; commit ? renameHabit(hid, input.value) : render(); };
-    input.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") finish(true);
-      else if (e.key === "Escape") finish(false);
-    });
-    input.addEventListener("blur", () => finish(true));
-  }
-
-  // color picker popover
-  function closePalette() { const p = document.getElementById("palette"); if (p) p.remove(); }
-  function openPalette(dot) {
-    closePalette();
-    const hid = dot.dataset.h;
-    const pal = document.createElement("div"); pal.className = "palette"; pal.id = "palette";
-    COLORS.forEach(c => {
-      const b = document.createElement("button"); b.className = "sw"; b.style.background = c;
-      b.title = c; b.addEventListener("click", () => { closePalette(); setColor(hid, c); });
-      pal.appendChild(b);
-    });
-    document.body.appendChild(pal);
-    const r = dot.getBoundingClientRect();
-    pal.style.left = (r.left + window.scrollX) + "px";
-    pal.style.top = (r.bottom + window.scrollY + 6) + "px";
-  }
-  document.addEventListener("click", (e) => {
-    if (!e.target.closest(".palette") && !e.target.closest(".dot")) closePalette();
-  });
-
-  // ---- drag to reorder (week view) ----
-  let dragId = null;
-  grid.addEventListener("dragstart", (e) => {
-    const row = e.target.closest(".row[data-id]"); if (!row) return;
-    dragId = row.dataset.id; row.classList.add("dragging");
-    e.dataTransfer.effectAllowed = "move";
-  });
-  grid.addEventListener("dragend", () => {
-    dragId = null;
-    grid.querySelectorAll(".dragging,.dragover").forEach(el => el.classList.remove("dragging", "dragover"));
-  });
-  grid.addEventListener("dragover", (e) => {
-    const row = e.target.closest(".row[data-id]"); if (!row || !dragId) return;
-    e.preventDefault();
-    grid.querySelectorAll(".dragover").forEach(el => el.classList.remove("dragover"));
-    if (row.dataset.id !== dragId) row.classList.add("dragover");
-  });
-  grid.addEventListener("drop", (e) => {
-    const row = e.target.closest(".row[data-id]"); if (!row || !dragId) return;
-    e.preventDefault(); reorder(dragId, row.dataset.id);
-  });
-
-  // ---- add habit ----
-  document.getElementById("addBtn").addEventListener("click", () => {
-    const i = document.getElementById("newHabit"); addHabit(i.value); i.value = ""; i.focus();
-  });
-  document.getElementById("newHabit").addEventListener("keydown", (e) => {
-    if (e.key === "Enter") { addHabit(e.target.value); e.target.value = ""; }
-  });
-
-  // ---- view toggle + navigation ----
-  document.getElementById("viewSeg").addEventListener("click", (e) => {
-    const b = e.target.closest("button[data-view]"); if (!b) return;
-    view = b.dataset.view; offset = 0;
-    document.querySelectorAll("#viewSeg button").forEach(x => x.classList.toggle("active", x === b));
-    grid.className = view === "month" ? "grid month" : "grid";
-    render();
-  });
-  document.getElementById("prev").addEventListener("click", () => { offset--; render(); });
-  document.getElementById("next").addEventListener("click", () => { if (offset < 0) { offset++; render(); } });
-
-  // ---- theme ----
-  function applyTheme(t) {
-    document.documentElement.setAttribute("data-theme", t);
-    document.getElementById("themeBtn").textContent = t === "light" ? "☀️" : "🌙";
-    localStorage.setItem(THEME_KEY, t);
-  }
-  document.getElementById("themeBtn").addEventListener("click", () => {
-    applyTheme(document.documentElement.getAttribute("data-theme") === "light" ? "dark" : "light");
-  });
-  applyTheme(localStorage.getItem(THEME_KEY) || "dark");
-
-  // ---- export / import ----
-  document.getElementById("exportBtn").addEventListener("click", () => {
-    const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url; a.download = "habits-" + iso(today) + ".json";
-    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
-  });
-  document.getElementById("importBtn").addEventListener("click", () => document.getElementById("importFile").click());
-  document.getElementById("importFile").addEventListener("change", (e) => {
-    const file = e.target.files[0]; if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        const data = normalize(JSON.parse(reader.result));
-        if (!data.habits.length && !confirm("That file has no habits. Import anyway (replaces current data)?")) return;
-        if (!confirm("Import will replace your current habits and history. Continue?")) return;
-        state = data; save(); render();
-      } catch (err) { alert("Couldn't read that file — is it a valid export?"); }
-    };
-    reader.readAsText(file); e.target.value = "";
-  });
-
-  render();
-})();
-</script>
+<script>document.getElementById("y").textContent = new Date().getFullYear();</script>
 </body>
 </html>

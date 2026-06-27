@@ -2,11 +2,27 @@
 
 A small, self-contained habit tracker. No build step, no dependencies — just open the file.
 
+## Files
+
+- `index.html` — marketing landing page (the product site).
+- `app.html` — the habit tracker app itself.
+- `assets/screenshot.png` — auto-generated app screenshot used on the landing page.
+- `vercel.json` — static-hosting config (clean URLs) for Vercel.
+- `privacy.html`, `terms.html` — Polish legal-page templates (fill in the `[ ]` fields).
+- `docs/` — step-by-step guides (PL): deploy on Vercel, backend, payments, legal requirements.
+
 ## Run it
 
-Open `index.html` in any modern browser (double-click it, or drag it into a browser tab).
+Open `app.html` in any modern browser (double-click it, or drag it into a browser tab),
+or open `index.html` to see the landing page first. Nothing to install.
 
-That's it. There's nothing to install.
+## Going live / selling it
+
+See the guides in `docs/`:
+1. `01-DEPLOY-VERCEL.md` — publish as a free site on Vercel.
+2. `02-BACKEND.md` — add accounts + sync (Supabase).
+3. `03-PLATNOSCI.md` — set up payments (Lemon Squeezy / Paddle / Stripe).
+4. `04-WYMOGI-PRAWNE.md` — Polish/EU legal checklist (GDPR, consumer law, VAT).
 
 ## What it does
 
