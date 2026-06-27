@@ -115,6 +115,17 @@
   .del { background: transparent; border: none; color: var(--muted); cursor: pointer; font-size: 16px; padding: 6px; border-radius: 8px; }
   .del:hover { color: var(--danger); background: color-mix(in srgb, var(--danger) 12%, transparent); }
 
+  .row .name .dot { cursor: pointer; box-shadow: 0 0 0 0 transparent; transition: box-shadow .15s; }
+  .row .name .dot:hover { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent); }
+  .hname { cursor: text; border-radius: 5px; padding: 1px 3px; }
+  .hname:hover { background: var(--panel-2); outline: 1px dashed var(--line); }
+  input.rename { background: var(--panel-2); border: 1px solid var(--accent); border-radius: 6px; padding: 3px 6px; outline: none; width: 100%; min-width: 0; }
+  .streak small { display: block; font-size: 10px; color: var(--muted); }
+
+  .palette { position: absolute; z-index: 50; display: flex; gap: 6px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px; box-shadow: var(--shadow); }
+  .palette .sw { width: 22px; height: 22px; border-radius: 6px; border: 2px solid transparent; cursor: pointer; padding: 0; }
+  .palette .sw:hover { border-color: var(--text); }
+
   .empty { padding: 46px 20px; text-align: center; color: var(--muted); }
   .empty h3 { color: var(--text); margin: 0 0 6px; }
 
@@ -283,11 +294,30 @@
     arr.splice(to, 0, moved);
     save(); render();
   }
+  function renameHabit(hid, name) {
+    const h = state.habits.find(x => x.id === hid); if (!h) return;
+    name = name.trim(); if (name) h.name = name.slice(0, 40);
+    save(); render();
+  }
+  function setColor(hid, color) {
+    const h = state.habits.find(x => x.id === hid); if (!h) return;
+    h.color = color; save(); render();
+  }
   function streak(h) {
     let count = 0, cursor = new Date(today);
     if (!h.log[iso(cursor)]) cursor = addDays(cursor, -1);
     while (h.log[iso(cursor)]) { count++; cursor = addDays(cursor, -1); }
     return count;
+  }
+  function bestStreak(h) {
+    const dates = Object.keys(h.log).filter(k => h.log[k]).sort();
+    let best = 0, cur = 0, prev = null;
+    for (const ds of dates) {
+      if (prev && (Date.parse(ds) - Date.parse(prev)) === 86400000) cur += 1; else cur = 1;
+      if (cur > best) best = cur;
+      prev = ds;
+    }
+    return best;
   }
 
   // ---- render ----
@@ -327,9 +357,10 @@
         const ds = iso(d), done = !!h.log[ds], future = d.getTime() > today.getTime();
         cells += `<button class="cell${done ? " done" : ""}${future ? " future" : ""}" data-h="${h.id}" data-d="${ds}" ${future ? "disabled" : ""} title="${ds}">✓</button>`;
       });
+      const best = bestStreak(h);
       row.innerHTML = `<div class="grip" title="Drag to reorder">⠿</div>` +
-        `<div class="name"><span class="dot" style="background:${h.color}"></span><span>${escapeHtml(h.name)}</span></div>` +
-        cells + `<div class="streak"><b>${streak(h)}</b> 🔥</div>` +
+        `<div class="name"><span class="dot" data-h="${h.id}" style="background:${h.color}" title="Change color"></span><span class="hname" data-h="${h.id}" title="Click to rename">${escapeHtml(h.name)}</span></div>` +
+        cells + `<div class="streak"><b>${streak(h)}</b> 🔥<small>best ${best}</small></div>` +
         `<button class="del" data-del="${h.id}" title="Delete habit">✕</button>`;
       grid.appendChild(row);
     });
@@ -366,10 +397,16 @@
     head.className = "mrow head";
     let nums = "";
     for (let i = 1; i <= 31; i++) nums += `<div>${i <= daysInMonth ? i : ""}</div>`;
-    head.innerHTML = `<div>Habit</div><div class="daynums">${nums}</div><div style="text-align:center">🔥</div>`;
+    head.innerHTML = `<div>Habit</div><div class="daynums">${nums}</div><div id="monthPct" style="text-align:center" title="Month completion">–</div>`;
     grid.appendChild(head);
 
     if (state.habits.length === 0) grid.appendChild(emptyEl());
+
+    // elapsed days that "count" toward completion this month
+    const isCurrent = year === today.getFullYear() && month === today.getMonth();
+    const isPast = base.getTime() < new Date(today.getFullYear(), today.getMonth(), 1).getTime();
+    const elapsed = isCurrent ? today.getDate() : (isPast ? daysInMonth : 0);
+    let monthDone = 0;
 
     state.habits.forEach(h => {
       const row = document.createElement("div"); row.className = "mrow";
@@ -384,10 +421,15 @@
       }
       // count this month
       let mc = 0; for (let day = 1; day <= daysInMonth; day++) if (h.log[iso(new Date(year, month, day))]) mc++;
-      row.innerHTML = `<div class="name"><span class="dot" style="background:${h.color}"></span><span>${escapeHtml(h.name)}</span></div>` +
+      monthDone += mc;
+      row.innerHTML = `<div class="name"><span class="dot" data-h="${h.id}" style="background:${h.color}" title="Change color"></span><span class="hname" data-h="${h.id}" title="Click to rename">${escapeHtml(h.name)}</span></div>` +
         `<div class="heat">${cells}</div>` + `<div class="mstreak"><b>${mc}</b></div>`;
       grid.appendChild(row);
     });
+
+    const possible = state.habits.length * elapsed;
+    const mp = grid.querySelector("#monthPct");
+    if (mp) mp.textContent = possible ? Math.round((monthDone / possible) * 100) + "%" : "–";
 
     const total = state.habits.length, done = state.habits.filter(h => h.log[todayStr]).length;
     setSummary(done, total);
@@ -409,12 +451,54 @@
 
   // ---- events: grid (toggle / delete / heatmap) ----
   grid.addEventListener("click", (e) => {
+    const dot = e.target.closest(".dot");
+    if (dot && dot.dataset.h) { openPalette(dot); return; }
+    const hname = e.target.closest(".hname");
+    if (hname && hname.dataset.h) { beginRename(hname); return; }
     const cell = e.target.closest(".cell");
     if (cell && !cell.disabled) { toggle(cell.dataset.h, cell.dataset.d); return; }
     const hd = e.target.closest(".hd");
     if (hd && !hd.classList.contains("future") && !hd.classList.contains("blank") && hd.dataset.h) { toggle(hd.dataset.h, hd.dataset.d); return; }
     const del = e.target.closest(".del");
     if (del) { const h = state.habits.find(x => x.id === del.dataset.del); if (h && confirm(`Delete "${h.name}" and its history?`)) removeHabit(del.dataset.del); }
+  });
+
+  // inline rename
+  function beginRename(span) {
+    const hid = span.dataset.h;
+    const h = state.habits.find(x => x.id === hid); if (!h) return;
+    const row = span.closest(".row, .mrow");
+    if (row) row.draggable = false; // let the text input handle selection
+    const input = document.createElement("input");
+    input.type = "text"; input.className = "rename"; input.maxLength = 40; input.value = h.name;
+    span.replaceWith(input); input.focus(); input.select();
+    let done = false;
+    const finish = (commit) => { if (done) return; done = true; commit ? renameHabit(hid, input.value) : render(); };
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") finish(true);
+      else if (e.key === "Escape") finish(false);
+    });
+    input.addEventListener("blur", () => finish(true));
+  }
+
+  // color picker popover
+  function closePalette() { const p = document.getElementById("palette"); if (p) p.remove(); }
+  function openPalette(dot) {
+    closePalette();
+    const hid = dot.dataset.h;
+    const pal = document.createElement("div"); pal.className = "palette"; pal.id = "palette";
+    COLORS.forEach(c => {
+      const b = document.createElement("button"); b.className = "sw"; b.style.background = c;
+      b.title = c; b.addEventListener("click", () => { closePalette(); setColor(hid, c); });
+      pal.appendChild(b);
+    });
+    document.body.appendChild(pal);
+    const r = dot.getBoundingClientRect();
+    pal.style.left = (r.left + window.scrollX) + "px";
+    pal.style.top = (r.bottom + window.scrollY + 6) + "px";
+  }
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest(".palette") && !e.target.closest(".dot")) closePalette();
   });
 
   // ---- drag to reorder (week view) ----

@@ -12,9 +12,11 @@ That's it. There's nothing to install.
 
 - **Add habits** — type a name and hit *Add* (or Enter).
 - **Tap to track** — click a day cell to mark a habit done; click again to undo.
-- **Streaks** — each habit shows its current 🔥 streak (consecutive days up to today).
+- **Rename inline** — click a habit's name to edit it (Enter to save, Esc to cancel).
+- **Recolor** — click a habit's colored dot to pick from a palette.
+- **Streaks + records** — each habit shows its current 🔥 streak and its all-time best.
 - **Today's progress ring** — shows how many of today's habits are done.
-- **Week / Month views** — toggle between a weekly grid and a month heatmap (calendar-style dots, one per day). Both are clickable.
+- **Week / Month views** — toggle between a weekly grid and a month heatmap (calendar-style dots, one per day). Both are clickable. Month view also shows an overall completion % for the month.
 - **Period navigation** — use ‹ › to look back at previous weeks or months (you can't mark future days).
 - **Week chart** — bars show your completion percentage for each day of the visible week.
 - **Drag to reorder** — grab the ⠿ handle and drag a habit up or down (week view).
