@@ -16,15 +16,30 @@
     --accent-2: #57e0b0;
     --danger: #ff6b81;
     --shadow: 0 10px 30px rgba(0,0,0,.35);
+    --heat-empty: #20253f;
+  }
+  html[data-theme="light"] {
+    --bg: #eef1fb;
+    --panel: #ffffff;
+    --panel-2: #f1f3fc;
+    --line: #dde1f2;
+    --text: #1b2042;
+    --muted: #6b73a0;
+    --accent: #4f6cff;
+    --accent-2: #1fae84;
+    --danger: #e5435c;
+    --shadow: 0 10px 30px rgba(60,70,140,.15);
+    --heat-empty: #e6e9f7;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background: radial-gradient(1200px 700px at 20% -10%, #1b2140 0%, var(--bg) 55%);
+    background: radial-gradient(1200px 700px at 20% -10%, color-mix(in srgb, var(--accent) 14%, var(--bg)) 0%, var(--bg) 55%);
     color: var(--text);
     min-height: 100vh;
     padding: 28px 16px 60px;
+    transition: background .25s, color .25s;
   }
   .wrap { max-width: 920px; margin: 0 auto; }
   header.app {
@@ -40,55 +55,48 @@
   h1 { font-size: 22px; margin: 0; letter-spacing: .3px; }
   .sub { color: var(--muted); font-size: 13px; margin-top: 2px; }
 
+  .right { display: flex; align-items: center; gap: 12px; }
   .summary {
     display: flex; align-items: center; gap: 18px;
     background: var(--panel); border: 1px solid var(--line);
     border-radius: 16px; padding: 14px 18px; box-shadow: var(--shadow);
   }
-  .ring { --p: 0; width: 64px; height: 64px; position: relative; }
+  .ring { width: 64px; height: 64px; position: relative; }
   .ring svg { transform: rotate(-90deg); }
-  .ring .pct {
-    position: absolute; inset: 0; display: grid; place-items: center;
-    font-weight: 700; font-size: 15px;
-  }
+  .ring .pct { position: absolute; inset: 0; display: grid; place-items: center; font-weight: 700; font-size: 15px; }
   .summary .meta { font-size: 13px; color: var(--muted); }
   .summary .meta b { color: var(--text); font-size: 16px; }
 
-  .toolbar {
-    display: flex; gap: 10px; align-items: center; margin: 22px 0 14px; flex-wrap: wrap;
-  }
-  .weeknav { display: flex; align-items: center; gap: 8px; }
-  .weeknav .label { font-size: 14px; color: var(--muted); min-width: 168px; text-align: center; }
-  button, input[type=text] {
-    font: inherit; color: var(--text);
-  }
+  .toolbar { display: flex; gap: 10px; align-items: center; margin: 22px 0 14px; flex-wrap: wrap; }
+  .nav { display: flex; align-items: center; gap: 8px; }
+  .nav .label { font-size: 14px; color: var(--muted); min-width: 168px; text-align: center; }
+  button, input[type=text] { font: inherit; color: var(--text); }
   .btn {
     background: var(--panel-2); border: 1px solid var(--line); color: var(--text);
     border-radius: 10px; padding: 9px 14px; cursor: pointer; transition: .15s;
   }
   .btn:hover { border-color: var(--accent); transform: translateY(-1px); }
-  .btn.primary { background: linear-gradient(135deg, var(--accent), #8aa0ff); border: none; font-weight: 600; }
+  .btn.primary { background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 60%, #fff)); border: none; font-weight: 600; color: #fff; }
   .btn.icon { padding: 9px 12px; }
   .spacer { flex: 1; }
 
+  .seg { display: inline-flex; background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; padding: 3px; }
+  .seg button { border: none; background: transparent; color: var(--muted); padding: 6px 14px; border-radius: 8px; cursor: pointer; font: inherit; transition: .15s; }
+  .seg button.active { background: var(--accent); color: #fff; font-weight: 600; }
+
   .addbar { display: flex; gap: 10px; flex: 1; min-width: 220px; }
-  .addbar input {
-    flex: 1; background: var(--panel); border: 1px solid var(--line);
-    border-radius: 10px; padding: 10px 14px; outline: none;
-  }
+  .addbar input { flex: 1; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; outline: none; }
   .addbar input:focus { border-color: var(--accent); }
 
-  .grid {
-    background: var(--panel); border: 1px solid var(--line);
-    border-radius: 16px; overflow: hidden; box-shadow: var(--shadow);
-  }
-  .row {
-    display: grid; grid-template-columns: 1fr repeat(7, 46px) 64px 36px;
-    align-items: center; gap: 6px; padding: 10px 14px;
-    border-bottom: 1px solid var(--line);
-  }
+  .grid { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; box-shadow: var(--shadow); }
+  .row { display: grid; grid-template-columns: 18px 1fr repeat(7, 46px) 64px 36px; align-items: center; gap: 6px; padding: 10px 14px; border-bottom: 1px solid var(--line); }
   .row.head { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .6px; background: var(--panel-2); }
   .row:last-child { border-bottom: none; }
+  .row.dragging { opacity: .4; }
+  .row.dragover { border-top: 2px solid var(--accent); }
+  .grip { cursor: grab; color: var(--muted); text-align: center; user-select: none; line-height: 1; }
+  .grip:active { cursor: grabbing; }
+  .row.head .grip { cursor: default; }
   .row .name { font-weight: 600; display: flex; align-items: center; gap: 8px; min-width: 0; }
   .row .name .dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
   .row .name span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -96,43 +104,56 @@
   .day small { display: block; color: var(--muted); font-size: 10px; }
   .day.today { color: var(--accent); font-weight: 700; }
 
-  .cell {
-    width: 34px; height: 34px; margin: 0 auto; border-radius: 9px;
-    border: 1.5px solid var(--line); background: transparent; cursor: pointer;
-    display: grid; place-items: center; transition: .12s; color: transparent;
-  }
+  .cell { width: 34px; height: 34px; margin: 0 auto; border-radius: 9px; border: 1.5px solid var(--line); background: transparent; cursor: pointer; display: grid; place-items: center; transition: .12s; color: transparent; }
   .cell:hover { border-color: var(--accent); }
-  .cell.done { background: linear-gradient(135deg, var(--accent-2), #4fd0c8); border-color: transparent; color: #06231b; font-weight: 800; }
+  .cell.done { background: linear-gradient(135deg, var(--accent-2), color-mix(in srgb, var(--accent-2) 70%, #2bb)); border-color: transparent; color: #06231b; font-weight: 800; }
   .cell.future { opacity: .35; cursor: not-allowed; }
   .cell.future:hover { border-color: var(--line); }
 
   .streak { text-align: center; font-size: 13px; color: var(--muted); }
   .streak b { color: var(--accent-2); }
   .del { background: transparent; border: none; color: var(--muted); cursor: pointer; font-size: 16px; padding: 6px; border-radius: 8px; }
-  .del:hover { color: var(--danger); background: rgba(255,107,129,.1); }
+  .del:hover { color: var(--danger); background: color-mix(in srgb, var(--danger) 12%, transparent); }
 
   .empty { padding: 46px 20px; text-align: center; color: var(--muted); }
   .empty h3 { color: var(--text); margin: 0 0 6px; }
 
-  .chartcard {
-    margin-top: 22px; background: var(--panel); border: 1px solid var(--line);
-    border-radius: 16px; padding: 18px; box-shadow: var(--shadow);
-  }
+  /* month heatmap */
+  .month { padding: 18px; }
+  .month .mrow { display: grid; grid-template-columns: 150px 1fr 36px; gap: 12px; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--line); }
+  .month .mrow:last-child { border-bottom: none; }
+  .month .mrow.head { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .6px; }
+  .heat { display: grid; grid-template-columns: repeat(31, 1fr); gap: 4px; }
+  .heat .hd { aspect-ratio: 1; border-radius: 4px; background: var(--heat-empty); cursor: pointer; transition: .1s; position: relative; }
+  .heat .hd.on { background: var(--accent-2); }
+  .heat .hd.today { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .heat .hd.future { opacity: .25; cursor: not-allowed; }
+  .heat .hd.blank { background: transparent; cursor: default; }
+  .heat .hd:not(.future):not(.blank):hover { transform: scale(1.25); }
+  .month .daynums { display: grid; grid-template-columns: repeat(31, 1fr); gap: 4px; color: var(--muted); font-size: 9px; text-align: center; }
+  .mstreak { text-align: center; font-size: 13px; color: var(--muted); }
+  .mstreak b { color: var(--accent-2); }
+
+  .chartcard { margin-top: 22px; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 18px; box-shadow: var(--shadow); }
   .chartcard h2 { font-size: 14px; margin: 0 0 16px; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; }
   .bars { display: flex; align-items: flex-end; gap: 12px; height: 140px; }
   .bar { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; height: 100%; justify-content: flex-end; }
   .bar .track { width: 100%; max-width: 46px; background: var(--panel-2); border-radius: 8px 8px 4px 4px; height: 100%; display: flex; align-items: flex-end; overflow: hidden; }
-  .bar .fill { width: 100%; background: linear-gradient(180deg, var(--accent), #8aa0ff); border-radius: 8px 8px 0 0; transition: height .5s cubic-bezier(.2,.8,.2,1); min-height: 2px; }
+  .bar .fill { width: 100%; background: linear-gradient(180deg, var(--accent), color-mix(in srgb, var(--accent) 60%, #fff)); border-radius: 8px 8px 0 0; transition: height .5s cubic-bezier(.2,.8,.2,1); min-height: 2px; }
   .bar .fill.full { background: linear-gradient(180deg, var(--accent-2), #4fd0c8); }
   .bar .lbl { font-size: 11px; color: var(--muted); }
   .bar .lbl.today { color: var(--accent); font-weight: 700; }
 
   footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 30px; }
+  footer a { color: var(--muted); cursor: pointer; text-decoration: underline; }
+  input[type=file] { display: none; }
 
   @media (max-width: 680px) {
-    .row { grid-template-columns: 1fr repeat(7, 1fr) 0 30px; font-size: 13px; }
+    .row { grid-template-columns: 16px 1fr repeat(7, 1fr) 0 30px; font-size: 13px; }
     .streak { display: none; }
     .cell { width: 30px; height: 30px; }
+    .month .mrow { grid-template-columns: 90px 1fr 0; }
+    .mstreak { display: none; }
   }
 </style>
 </head>
@@ -146,20 +167,20 @@
         <div class="sub">Tap a day to mark a habit done. Build your streaks.</div>
       </div>
     </div>
-    <div class="summary">
-      <div class="ring" id="ring">
-        <svg width="64" height="64" viewBox="0 0 64 64">
-          <circle cx="32" cy="32" r="27" fill="none" stroke="#2a3052" stroke-width="8"/>
-          <circle id="ringFg" cx="32" cy="32" r="27" fill="none" stroke="url(#g)" stroke-width="8" stroke-linecap="round" stroke-dasharray="169.6" stroke-dashoffset="169.6"/>
-          <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stop-color="#6c8cff"/><stop offset="1" stop-color="#57e0b0"/>
-          </linearGradient></defs>
-        </svg>
-        <div class="pct" id="ringPct">0%</div>
-      </div>
-      <div class="meta">
-        Today's progress<br>
-        <b id="todayCount">0 / 0</b> habits done
+    <div class="right">
+      <button class="btn icon" id="themeBtn" title="Toggle theme">🌙</button>
+      <div class="summary">
+        <div class="ring" id="ring">
+          <svg width="64" height="64" viewBox="0 0 64 64">
+            <circle cx="32" cy="32" r="27" fill="none" stroke="var(--line)" stroke-width="8"/>
+            <circle id="ringFg" cx="32" cy="32" r="27" fill="none" stroke="url(#g)" stroke-width="8" stroke-linecap="round" stroke-dasharray="169.6" stroke-dashoffset="169.6"/>
+            <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#6c8cff"/><stop offset="1" stop-color="#57e0b0"/>
+            </linearGradient></defs>
+          </svg>
+          <div class="pct" id="ringPct">0%</div>
+        </div>
+        <div class="meta">Today's progress<br><b id="todayCount">0 / 0</b> habits done</div>
       </div>
     </div>
   </header>
@@ -170,28 +191,40 @@
       <button class="btn primary" id="addBtn">+ Add</button>
     </div>
     <div class="spacer"></div>
-    <div class="weeknav">
-      <button class="btn icon" id="prevWeek">‹</button>
-      <div class="label" id="weekLabel">This week</div>
-      <button class="btn icon" id="nextWeek">›</button>
+    <div class="seg" id="viewSeg">
+      <button data-view="week" class="active">Week</button>
+      <button data-view="month">Month</button>
+    </div>
+    <div class="nav">
+      <button class="btn icon" id="prev">‹</button>
+      <div class="label" id="periodLabel">This week</div>
+      <button class="btn icon" id="next">›</button>
     </div>
   </div>
 
   <div class="grid" id="grid"></div>
 
-  <div class="chartcard">
+  <div class="chartcard" id="chartcard">
     <h2>Week completion</h2>
     <div class="bars" id="bars"></div>
   </div>
 
-  <footer>Saved automatically in your browser · Built in the Tracker-Habit repo</footer>
+  <footer>
+    Saved automatically in your browser ·
+    <a id="exportBtn">Export data</a> ·
+    <a id="importBtn">Import data</a>
+    <input type="file" id="importFile" accept="application/json,.json" />
+  </footer>
 </div>
 
 <script>
 (function () {
   "use strict";
   const STORE_KEY = "habitTracker.v1";
+  const THEME_KEY = "habitTracker.theme";
   const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  const COLORS = ["#6c8cff","#57e0b0","#ffb86b","#ff6b81","#c792ea","#7bdff2","#f2c94c"];
 
   // ---- date helpers (local time) ----
   const iso = (d) => {
@@ -199,10 +232,9 @@
     return z.toISOString().slice(0, 10);
   };
   const today = new Date(); today.setHours(0,0,0,0);
-  // Monday as start of week
   function startOfWeek(d) {
     const x = new Date(d); x.setHours(0,0,0,0);
-    const day = (x.getDay() + 6) % 7; // 0 = Monday
+    const day = (x.getDay() + 6) % 7;
     x.setDate(x.getDate() - day);
     return x;
   }
@@ -210,50 +242,50 @@
 
   // ---- state ----
   let state = load();
-  let weekOffset = 0; // 0 = current week
+  let view = "week";        // "week" | "month"
+  let offset = 0;           // periods from current (negative = past)
 
   function load() {
-    try {
-      const raw = localStorage.getItem(STORE_KEY);
-      if (raw) return JSON.parse(raw);
-    } catch (e) {}
-    return {
-      habits: [
-        { id: id(), name: "Drink water", color: "#6c8cff", log: {} },
-        { id: id(), name: "Read 20 min", color: "#57e0b0", log: {} },
-        { id: id(), name: "Exercise", color: "#ffb86b", log: {} },
-      ],
-    };
+    try { const raw = localStorage.getItem(STORE_KEY); if (raw) return normalize(JSON.parse(raw)); } catch (e) {}
+    return { habits: [
+      { id: id(), name: "Drink water", color: COLORS[0], log: {} },
+      { id: id(), name: "Read 20 min", color: COLORS[1], log: {} },
+      { id: id(), name: "Exercise", color: COLORS[2], log: {} },
+    ]};
+  }
+  function normalize(s) {
+    if (!s || !Array.isArray(s.habits)) return { habits: [] };
+    s.habits = s.habits.map(h => ({ id: h.id || id(), name: String(h.name || "Untitled"), color: h.color || COLORS[0], log: h.log && typeof h.log === "object" ? h.log : {} }));
+    return s;
   }
   function save() { localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
   function id() { return Math.random().toString(36).slice(2, 9); }
 
-  const COLORS = ["#6c8cff","#57e0b0","#ffb86b","#ff6b81","#c792ea","#7bdff2","#f2c94c"];
-
   // ---- actions ----
   function addHabit(name) {
-    name = name.trim();
-    if (!name) return;
-    const color = COLORS[state.habits.length % COLORS.length];
-    state.habits.push({ id: id(), name, color, log: {} });
+    name = name.trim(); if (!name) return;
+    state.habits.push({ id: id(), name, color: COLORS[state.habits.length % COLORS.length], log: {} });
     save(); render();
   }
-  function removeHabit(hid) {
-    state.habits = state.habits.filter(h => h.id !== hid);
-    save(); render();
-  }
+  function removeHabit(hid) { state.habits = state.habits.filter(h => h.id !== hid); save(); render(); }
   function toggle(hid, dateStr) {
-    const h = state.habits.find(x => x.id === hid);
-    if (!h) return;
+    const h = state.habits.find(x => x.id === hid); if (!h) return;
     if (h.log[dateStr]) delete h.log[dateStr]; else h.log[dateStr] = 1;
     save(); render();
   }
-
-  // current streak counting back from today (inclusive if done today, else from yesterday)
+  function reorder(fromId, toId) {
+    if (fromId === toId) return;
+    const arr = state.habits;
+    const from = arr.findIndex(h => h.id === fromId);
+    const to = arr.findIndex(h => h.id === toId);
+    if (from < 0 || to < 0) return;
+    const [moved] = arr.splice(from, 1);
+    arr.splice(to, 0, moved);
+    save(); render();
+  }
   function streak(h) {
-    let count = 0;
-    let cursor = new Date(today);
-    if (!h.log[iso(cursor)]) cursor = addDays(cursor, -1); // allow streak through yesterday
+    let count = 0, cursor = new Date(today);
+    if (!h.log[iso(cursor)]) cursor = addDays(cursor, -1);
     while (h.log[iso(cursor)]) { count++; cursor = addDays(cursor, -1); }
     return count;
   }
@@ -261,105 +293,204 @@
   // ---- render ----
   const grid = document.getElementById("grid");
   const bars = document.getElementById("bars");
+  const chartcard = document.getElementById("chartcard");
 
-  function render() {
-    const weekStart = addDays(startOfWeek(today), weekOffset * 7);
+  function render() { view === "week" ? renderWeek() : renderMonth(); }
+
+  function renderWeek() {
+    chartcard.style.display = "";
+    const weekStart = addDays(startOfWeek(today), offset * 7);
     const weekDates = DAYS.map((_, i) => addDays(weekStart, i));
     const todayStr = iso(today);
 
-    // week label
-    const wl = document.getElementById("weekLabel");
-    if (weekOffset === 0) wl.textContent = "This week";
-    else if (weekOffset === -1) wl.textContent = "Last week";
-    else {
-      const opt = { month: "short", day: "numeric" };
-      wl.textContent = weekDates[0].toLocaleDateString(undefined, opt) + " – " + weekDates[6].toLocaleDateString(undefined, opt);
-    }
+    const wl = document.getElementById("periodLabel");
+    if (offset === 0) wl.textContent = "This week";
+    else if (offset === -1) wl.textContent = "Last week";
+    else { const o = { month: "short", day: "numeric" }; wl.textContent = weekDates[0].toLocaleDateString(undefined, o) + " – " + weekDates[6].toLocaleDateString(undefined, o); }
 
-    // grid
     grid.innerHTML = "";
     const head = document.createElement("div");
     head.className = "row head";
-    head.innerHTML = "<div>Habit</div>" + weekDates.map(d => {
+    head.innerHTML = "<div class='grip'></div><div>Habit</div>" + weekDates.map(d => {
       const t = iso(d) === todayStr ? " today" : "";
       return `<div class="day${t}">${DAYS[(d.getDay()+6)%7]}<small>${d.getDate()}</small></div>`;
     }).join("") + "<div style='text-align:center'>Streak</div><div></div>";
     grid.appendChild(head);
 
-    if (state.habits.length === 0) {
-      const e = document.createElement("div");
-      e.className = "empty";
-      e.innerHTML = "<h3>No habits yet</h3><div>Add your first habit above to start tracking.</div>";
-      grid.appendChild(e);
-    }
+    if (state.habits.length === 0) { grid.appendChild(emptyEl()); }
 
     state.habits.forEach(h => {
       const row = document.createElement("div");
-      row.className = "row";
+      row.className = "row"; row.dataset.id = h.id; row.draggable = true;
       let cells = "";
       weekDates.forEach(d => {
-        const ds = iso(d);
-        const done = !!h.log[ds];
-        const future = d.getTime() > today.getTime();
+        const ds = iso(d), done = !!h.log[ds], future = d.getTime() > today.getTime();
         cells += `<button class="cell${done ? " done" : ""}${future ? " future" : ""}" data-h="${h.id}" data-d="${ds}" ${future ? "disabled" : ""} title="${ds}">✓</button>`;
       });
-      row.innerHTML =
+      row.innerHTML = `<div class="grip" title="Drag to reorder">⠿</div>` +
         `<div class="name"><span class="dot" style="background:${h.color}"></span><span>${escapeHtml(h.name)}</span></div>` +
-        cells +
-        `<div class="streak"><b>${streak(h)}</b> 🔥</div>` +
+        cells + `<div class="streak"><b>${streak(h)}</b> 🔥</div>` +
         `<button class="del" data-del="${h.id}" title="Delete habit">✕</button>`;
       grid.appendChild(row);
     });
 
     // today summary
-    const total = state.habits.length;
-    const done = state.habits.filter(h => h.log[todayStr]).length;
-    const pct = total ? Math.round((done / total) * 100) : 0;
-    document.getElementById("todayCount").textContent = `${done} / ${total}`;
-    document.getElementById("ringPct").textContent = pct + "%";
-    const circ = 2 * Math.PI * 27;
-    document.getElementById("ringFg").style.strokeDashoffset = circ * (1 - pct / 100);
+    const total = state.habits.length, done = state.habits.filter(h => h.log[todayStr]).length;
+    setSummary(done, total);
 
     // week chart
     bars.innerHTML = "";
     weekDates.forEach(d => {
-      const ds = iso(d);
-      const future = d.getTime() > today.getTime();
+      const ds = iso(d), future = d.getTime() > today.getTime();
       const c = total ? state.habits.filter(h => h.log[ds]).length : 0;
       const p = total ? Math.round((c / total) * 100) : 0;
-      const bar = document.createElement("div");
-      bar.className = "bar";
-      const isToday = ds === todayStr;
-      bar.innerHTML =
-        `<div class="track"><div class="fill${p === 100 ? " full" : ""}" style="height:${future ? 0 : p}%"></div></div>` +
-        `<div class="lbl${isToday ? " today" : ""}">${DAYS[(d.getDay()+6)%7]}</div>`;
+      const bar = document.createElement("div"); bar.className = "bar";
+      bar.innerHTML = `<div class="track"><div class="fill${p === 100 ? " full" : ""}" style="height:${future ? 0 : p}%"></div></div>` +
+        `<div class="lbl${ds === todayStr ? " today" : ""}">${DAYS[(d.getDay()+6)%7]}</div>`;
       bars.appendChild(bar);
     });
   }
 
-  function escapeHtml(s) {
-    return s.replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[c]));
+  function renderMonth() {
+    chartcard.style.display = "none";
+    const base = new Date(today.getFullYear(), today.getMonth() + offset, 1);
+    const year = base.getFullYear(), month = base.getMonth();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const todayStr = iso(today);
+
+    document.getElementById("periodLabel").textContent = MONTHS[month] + " " + year;
+
+    grid.className = "grid month";
+    grid.innerHTML = "";
+    const head = document.createElement("div");
+    head.className = "mrow head";
+    let nums = "";
+    for (let i = 1; i <= 31; i++) nums += `<div>${i <= daysInMonth ? i : ""}</div>`;
+    head.innerHTML = `<div>Habit</div><div class="daynums">${nums}</div><div style="text-align:center">🔥</div>`;
+    grid.appendChild(head);
+
+    if (state.habits.length === 0) grid.appendChild(emptyEl());
+
+    state.habits.forEach(h => {
+      const row = document.createElement("div"); row.className = "mrow";
+      let cells = "";
+      for (let day = 1; day <= 31; day++) {
+        if (day > daysInMonth) { cells += `<div class="hd blank"></div>`; continue; }
+        const d = new Date(year, month, day);
+        const ds = iso(d), on = !!h.log[ds];
+        const future = d.getTime() > today.getTime();
+        const istoday = ds === todayStr;
+        cells += `<div class="hd${on ? " on" : ""}${future ? " future" : ""}${istoday ? " today" : ""}" data-h="${h.id}" data-d="${ds}" title="${ds}"></div>`;
+      }
+      // count this month
+      let mc = 0; for (let day = 1; day <= daysInMonth; day++) if (h.log[iso(new Date(year, month, day))]) mc++;
+      row.innerHTML = `<div class="name"><span class="dot" style="background:${h.color}"></span><span>${escapeHtml(h.name)}</span></div>` +
+        `<div class="heat">${cells}</div>` + `<div class="mstreak"><b>${mc}</b></div>`;
+      grid.appendChild(row);
+    });
+
+    const total = state.habits.length, done = state.habits.filter(h => h.log[todayStr]).length;
+    setSummary(done, total);
   }
 
-  // ---- events ----
+  function setSummary(done, total) {
+    const pct = total ? Math.round((done / total) * 100) : 0;
+    document.getElementById("todayCount").textContent = `${done} / ${total}`;
+    document.getElementById("ringPct").textContent = pct + "%";
+    document.getElementById("ringFg").style.strokeDashoffset = (2 * Math.PI * 27) * (1 - pct / 100);
+  }
+
+  function emptyEl() {
+    const e = document.createElement("div"); e.className = "empty";
+    e.innerHTML = "<h3>No habits yet</h3><div>Add your first habit above to start tracking.</div>";
+    return e;
+  }
+  function escapeHtml(s) { return s.replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[c])); }
+
+  // ---- events: grid (toggle / delete / heatmap) ----
   grid.addEventListener("click", (e) => {
     const cell = e.target.closest(".cell");
     if (cell && !cell.disabled) { toggle(cell.dataset.h, cell.dataset.d); return; }
+    const hd = e.target.closest(".hd");
+    if (hd && !hd.classList.contains("future") && !hd.classList.contains("blank") && hd.dataset.h) { toggle(hd.dataset.h, hd.dataset.d); return; }
     const del = e.target.closest(".del");
-    if (del) {
-      const h = state.habits.find(x => x.id === del.dataset.del);
-      if (h && confirm(`Delete "${h.name}" and its history?`)) removeHabit(del.dataset.del);
-    }
+    if (del) { const h = state.habits.find(x => x.id === del.dataset.del); if (h && confirm(`Delete "${h.name}" and its history?`)) removeHabit(del.dataset.del); }
   });
+
+  // ---- drag to reorder (week view) ----
+  let dragId = null;
+  grid.addEventListener("dragstart", (e) => {
+    const row = e.target.closest(".row[data-id]"); if (!row) return;
+    dragId = row.dataset.id; row.classList.add("dragging");
+    e.dataTransfer.effectAllowed = "move";
+  });
+  grid.addEventListener("dragend", () => {
+    dragId = null;
+    grid.querySelectorAll(".dragging,.dragover").forEach(el => el.classList.remove("dragging", "dragover"));
+  });
+  grid.addEventListener("dragover", (e) => {
+    const row = e.target.closest(".row[data-id]"); if (!row || !dragId) return;
+    e.preventDefault();
+    grid.querySelectorAll(".dragover").forEach(el => el.classList.remove("dragover"));
+    if (row.dataset.id !== dragId) row.classList.add("dragover");
+  });
+  grid.addEventListener("drop", (e) => {
+    const row = e.target.closest(".row[data-id]"); if (!row || !dragId) return;
+    e.preventDefault(); reorder(dragId, row.dataset.id);
+  });
+
+  // ---- add habit ----
   document.getElementById("addBtn").addEventListener("click", () => {
-    const input = document.getElementById("newHabit");
-    addHabit(input.value); input.value = ""; input.focus();
+    const i = document.getElementById("newHabit"); addHabit(i.value); i.value = ""; i.focus();
   });
   document.getElementById("newHabit").addEventListener("keydown", (e) => {
     if (e.key === "Enter") { addHabit(e.target.value); e.target.value = ""; }
   });
-  document.getElementById("prevWeek").addEventListener("click", () => { weekOffset--; render(); });
-  document.getElementById("nextWeek").addEventListener("click", () => { if (weekOffset < 0) { weekOffset++; render(); } });
+
+  // ---- view toggle + navigation ----
+  document.getElementById("viewSeg").addEventListener("click", (e) => {
+    const b = e.target.closest("button[data-view]"); if (!b) return;
+    view = b.dataset.view; offset = 0;
+    document.querySelectorAll("#viewSeg button").forEach(x => x.classList.toggle("active", x === b));
+    grid.className = view === "month" ? "grid month" : "grid";
+    render();
+  });
+  document.getElementById("prev").addEventListener("click", () => { offset--; render(); });
+  document.getElementById("next").addEventListener("click", () => { if (offset < 0) { offset++; render(); } });
+
+  // ---- theme ----
+  function applyTheme(t) {
+    document.documentElement.setAttribute("data-theme", t);
+    document.getElementById("themeBtn").textContent = t === "light" ? "☀️" : "🌙";
+    localStorage.setItem(THEME_KEY, t);
+  }
+  document.getElementById("themeBtn").addEventListener("click", () => {
+    applyTheme(document.documentElement.getAttribute("data-theme") === "light" ? "dark" : "light");
+  });
+  applyTheme(localStorage.getItem(THEME_KEY) || "dark");
+
+  // ---- export / import ----
+  document.getElementById("exportBtn").addEventListener("click", () => {
+    const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = "habits-" + iso(today) + ".json";
+    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  });
+  document.getElementById("importBtn").addEventListener("click", () => document.getElementById("importFile").click());
+  document.getElementById("importFile").addEventListener("change", (e) => {
+    const file = e.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = normalize(JSON.parse(reader.result));
+        if (!data.habits.length && !confirm("That file has no habits. Import anyway (replaces current data)?")) return;
+        if (!confirm("Import will replace your current habits and history. Continue?")) return;
+        state = data; save(); render();
+      } catch (err) { alert("Couldn't read that file — is it a valid export?"); }
+    };
+    reader.readAsText(file); e.target.value = "";
+  });
 
   render();
 })();
