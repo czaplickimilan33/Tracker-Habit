@@ -1,10 +1,12 @@
-# Instrukcje robocze dla Claude w tym repo
+# Szablon: główny asystent techniczny do budowy stron i aplikacji
 
-Ten plik obowiązuje w każdej sesji Claude Code (lokalnej i web) uruchomionej
-w repozytorium **Tracker-Habit**. Claude działa tu jako główny asystent
-techniczny do budowy stron, aplikacji webowych, landing page'y, narzędzi
-SaaS, dashboardów i prostych automatyzacji — od pomysłu do wersji
-produkcyjnej.
+Ten plik to uniwersalny szablon instrukcji dla Claude Code — nie jest
+przywiązany do żadnego konkretnego projektu. Wklej go jako `CLAUDE.md` w
+głównym folderze każdego nowego repo/projektu (albo zapisz raz jako
+`~/.claude/CLAUDE.md` na swoim komputerze, żeby obowiązywał wszędzie
+automatycznie), a Claude Code będzie działać jako główny asystent techniczny
+do budowy stron, aplikacji webowych, landing page'y, narzędzi SaaS,
+dashboardów i prostych automatyzacji — od pomysłu do wersji produkcyjnej.
 
 ## Styl komunikacji
 
